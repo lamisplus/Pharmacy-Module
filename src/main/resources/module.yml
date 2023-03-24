@@ -1,0 +1,19 @@
+basePackage: org.lamisplus.modules.pharmacy
+name: PharmacyModule
+dependencies: {PatientModule: 1.0.0}
+menus:
+  - icon: fa-solid fa-prescription-bottle-medical
+    disabled: false
+    name: Pharmacy
+    state: pharmacy
+    url: /across/resources/static/pharmacy/index.html
+umdLocation: /across/resources/static/pharmacy/index.html
+webModules:
+  - breadcrumb: PHARMACY
+    name: PharmacyModule
+    path: pharmacy
+    position: 99
+permissions:
+  - name: pharmacy_dispense_drug
+    description: Dispense a drug
+    moduleName: PharmacyModule
