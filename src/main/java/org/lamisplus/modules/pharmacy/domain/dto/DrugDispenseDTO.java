@@ -1,43 +1,42 @@
 package org.lamisplus.modules.pharmacy.domain.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class DrugDispenseDTO {
     private Long id;
-
-    @NotBlank(message = "drugName is mandatory")
-    private String drugName;
-    //private String uuid;
-
-    @NotNull(message = "dateTimeDispensed is mandatory")
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd@HH:mm:ss")
-    private LocalDateTime dateTimeDispensed;
-    private String comment;
-    private String brand;
-    private Long quantity;
-    private String unit;
-    private String dispensedBy;
-
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate startDate;
-    private String dosageStrength;
-    private String dosageStrengthUnit;
-    private Integer dosageFrequency;
-
-    @NotNull(message = "drugOrderId is mandatory")
+    private String uuid;
     private Long drugOrderId;
-
-    @NotNull(message = "patientId is mandatory")
     private Long patientId;
-    private Integer duration;
-    private String durationUnit;
-    private String type;
-    private Object otherDetails;
-    private Long VisitId;
+    private String medicationName;
+    private String brandName;
+    private String manufacturer;
+    private String batchNumber;
+    private LocalDate expiryDate;
+
+    @NotNull(message = "Quantity dispensed is required")
+    private Integer quantityDispensed;
+    private String quantityUnit;
+    private String formulation;
+    private String strength;
+    private LocalDateTime dateTimeDispensed;
+    private Long dispensedBy;
+    private String dispenserName;
+    private Boolean substitutionMade;
+    private String substitutionReason;
+
+    private String dispensingNotes;
+
+    private Boolean isRefill;
+    private Integer refillNumber;
 }

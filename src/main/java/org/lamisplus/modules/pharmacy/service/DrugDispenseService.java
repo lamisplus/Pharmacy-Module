@@ -3,208 +3,217 @@ package org.lamisplus.modules.pharmacy.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.lamisplus.modules.base.controller.apierror.EntityNotFoundException;
-import org.lamisplus.modules.base.controller.apierror.RecordExistException;
-import org.lamisplus.modules.base.domain.dto.PageDTO;
-import org.lamisplus.modules.patient.domain.dto.PersonResponseDto;
+
+import org.lamisplus.modules.base.service.UserService;
 import org.lamisplus.modules.patient.domain.entity.Person;
+import org.lamisplus.modules.patient.repository.PersonRepository;
 import org.lamisplus.modules.patient.service.PersonService;
+import org.lamisplus.modules.pharmacy.controller.DrugDispenseController;
 import org.lamisplus.modules.pharmacy.domain.dto.*;
+import org.lamisplus.modules.pharmacy.domain.entity.DispensingStatus;
 import org.lamisplus.modules.pharmacy.domain.entity.DrugDispense;
 import org.lamisplus.modules.pharmacy.domain.entity.DrugOrder;
 import org.lamisplus.modules.pharmacy.domain.mapper.DrugDispenseMapper;
+import org.lamisplus.modules.pharmacy.domain.projections.DispensingHistoryProjection;
 import org.lamisplus.modules.pharmacy.repository.DrugDispenseRepository;
+import org.lamisplus.modules.pharmacy.repository.DrugOrderRepository;
 import org.lamisplus.modules.pharmacy.util.JsonNodeTransformer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import javax.persistence.EntityNotFoundException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
-import java.time.LocalDate;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Optional;
 
-import static java.util.stream.Collectors.groupingBy;
+import org.lamisplus.modules.base.domain.entities.User;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
+@Transactional
 public class DrugDispenseService {
-    private static final int ARCHIVED = 1;
-    private static final int UN_ARCHIVED = 0;
-    private final DrugDispenseRepository drugDispenseRepository;
-    private final DrugDispenseMapper drugDispenseMapper;
+
+    private static final Logger log = LoggerFactory.getLogger(DrugDispenseService.class);
+
+    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+
+    private final DrugDispenseRepository drugDispensingRepository;
+    private final DrugOrderRepository drugOrderRepository;
     private final PersonService personService;
-    //private final JsonNodeTransformer jsonNodeTransformer;
-    private final PatientDetailService patientDetailService;
+    private final DrugDispenseMapper drugDispenseMapper;
+    private final UserService userService;
+    private PersonRepository personRepository;
 
 
-    public PharmacyDispenseListMetaDataDTO getAllDrugDispense(String searchParam, int pageNo, int pageSize) {
-        Pageable paging = PageRequest.of(pageNo, pageSize, Sort.by("id").descending());
-        Page<DrugDispense> orders = drugDispenseRepository.findAllByArchived(UN_ARCHIVED, paging);
 
-        if (orders.hasContent()) {
-            PageDTO pageDTO = this.generatePagination(orders);
-            PharmacyDispenseListMetaDataDTO dispenseListMetaDataDTO = new PharmacyDispenseListMetaDataDTO();
-            dispenseListMetaDataDTO.setTotalRecords(pageDTO.getTotalRecords());
-            dispenseListMetaDataDTO.setPageSize(pageDTO.getPageSize());
-            dispenseListMetaDataDTO.setTotalPages(pageDTO.getTotalPages());
-            dispenseListMetaDataDTO.setCurrentPage(pageDTO.getPageNumber());
-            dispenseListMetaDataDTO.setRecords(drugDispenseMapper.toDrugDispenseDTOList(new ArrayList<>(orders.getContent()).stream()
-                    .sorted(Comparator.comparingLong(DrugDispense::getId).reversed()).collect(Collectors.toList())));
 
-            return dispenseListMetaDataDTO;
+    @Transactional
+    public DrugDispenseDTO dispenseDrug(DrugDispenseDTO dto) {
+        log.info("Starting dispensing process - Order ID: {}, Patient ID: {}",
+                dto.getDrugOrderId(), dto.getPatientId());
+
+        DrugOrder drugOrder = drugOrderRepository.findByIdAndArchived(dto.getDrugOrderId(), 0)
+                .orElseThrow(() -> new EntityNotFoundException("Drug order not found with id: " + dto.getDrugOrderId()));
+
+        log.info("Drug order found: {}", drugOrder.getMedicationName());
+
+
+        Person patient = drugOrder.getPatient();
+        log.info("Using patient from drug order: {} {} (ID: {})",
+                patient.getFirstName(), patient.getSurname(), patient.getId());
+
+        if (!patient.getId().equals(dto.getPatientId())) {
+            log.warn("Patient ID mismatch - Order has: {}, DTO has: {}",
+                    patient.getId(), dto.getPatientId());
+
         }
 
-        return new PharmacyDispenseListMetaDataDTO();
+        DrugDispense dispensing = drugDispenseMapper.toEntity(dto);
+
+        dispensing.setDrugOrder(drugOrder);
+        dispensing.setPatient(patient); // Use patient from order
+        dispensing.setMedicationName(drugOrder.getMedicationName());
+        dispensing.setFormulation(drugOrder.getFormulation());
+        dispensing.setStrength(drugOrder.getStrength());
+        dispensing.setDateTimeDispensed(LocalDateTime.now());
+
+        DrugDispense saved = drugDispensingRepository.save(dispensing);
+        return drugDispenseMapper.toDTO(saved);
     }
 
-    public PageDTO generatePagination(Page page) {
-        long totalRecords = page.getTotalElements();
-        int pageNumber = page.getNumber();
-        int pageSize = page.getSize();
-        int totalPages = page.getTotalPages();
-        return PageDTO.builder().totalRecords(totalRecords)
-                .pageNumber(pageNumber)
-                .pageSize(pageSize)
-                .totalPages(totalPages).build();
+    @Transactional
+    public DrugDispenseDTO updateDispensing(Long id, DrugDispenseDTO dto) {
+
+        DrugDispense existing = drugDispensingRepository.findByIdAndArchived(id, 0)
+                .orElseThrow(() -> new EntityNotFoundException("Dispensing record not found with id: " + id));
+
+
+        DrugOrder drugOrder = drugOrderRepository.findByIdAndArchived(existing.getDrugOrder().getId(), 0)
+                .orElseThrow(() -> new EntityNotFoundException("Drug order not found with id: " + existing.getDrugOrder().getId()));
+
+        Person patient = personRepository.findById(existing.getPatient().getId())
+                .orElseThrow(() -> new EntityNotFoundException("Patient not found with id: " + existing.getPatient().getId()));
+
+
+        dto.setId(existing.getId());
+        dto.setUuid(existing.getUuid());
+        dto.setDrugOrderId(drugOrder.getId());
+        dto.setPatientId(patient.getId());
+        dto.setDateTimeDispensed(existing.getDateTimeDispensed());
+
+        drugDispenseMapper.updateEntity(dto, existing);
+
+        existing.setDrugOrder(drugOrder);
+        existing.setPatient(patient);
+
+        DrugDispense updated = drugDispensingRepository.save(existing);
+
+        return drugDispenseMapper.toDTO(updated);
     }
 
-    public List<DrugDispense> save(DrugDispenseDTOS drugDispenseDTOS) {
-        //Optional<Drug> DrugOptional = drugDispenseRepository.findByDrugNameAndPatientIdAndDrugOrderId(drugOrder.getName(), UN_ARCHIVED);
-        //if (DrugOptional.isPresent()) throw new RecordExistException(Drug.class, "Name", drugOrder.getName());
-        List<DrugDispense> drugDispenseList = new ArrayList<>();
-        drugDispenseDTOS.getDrugDispenses().forEach(drugDispense -> {
-            if(!personService.isPersonExist(drugDispense.getPatientId())){
-                throw new EntityNotFoundException(Person.class, "patientId", "" + drugDispense.getPatientId());
-            }
-            if(drugDispense.getDrugOrderId() == null){
-                throw new EntityNotFoundException(DrugOrder.class, "DrugOrderId", "DrugOrderId");
-            } else {
-                drugDispenseRepository
-                        .findByDrugOrderId(drugDispense.getDrugOrderId())
-                        .ifPresent( drugDispense1 -> {
-                throw new RecordExistException(DrugDispense.class, "Drug " + drugDispense.getDrugName()+ " has already been dispensed with order", " "+drugDispense.getDrugOrderId());
-            });
-            }
-            drugDispenseList.add(drugDispense);
-        });
-        return drugDispenseRepository.saveAll(drugDispenseList);
+
+
+
+
+
+    public DrugDispenseDTO getDispensingById(Long id) {
+        DrugDispense dispensing = drugDispensingRepository.findByIdAndArchived(id, 0)
+                .orElseThrow(() -> new EntityNotFoundException("Dispensing record not found with id: " + id));
+
+        return drugDispenseMapper.toDTO(dispensing);
     }
 
-    public DrugDispenseDTO getDrugDispense(Long id) {
-        DrugDispense drugDispense = drugDispenseRepository
-                .findByIdAndArchived(id, UN_ARCHIVED)
-                .orElseThrow(() -> new EntityNotFoundException(DrugDispense.class, "Id", id + ""));
-        return drugDispenseMapper.toDrugDispenseDTO(drugDispense);
+    public List<DrugDispenseDTO> getDispensingByDrugOrder(Long drugOrderId) {
+        List<DrugDispense> dispensings = drugDispensingRepository.findByDrugOrderIdAndArchived(drugOrderId, 0);
+        return drugDispenseMapper.toDTOList(dispensings);
     }
 
-    public DrugDispense update(Long id, DrugDispenseDTO drugDispenseDTO) {
-        drugDispenseRepository.findByIdAndArchived(id, UN_ARCHIVED).orElseThrow(() -> new EntityNotFoundException(DrugDispense.class, "Id", id + ""));
-
-        drugDispenseDTO.setId(id);
-        DrugDispense drugDispense = drugDispenseMapper.toDrugDispense(drugDispenseDTO);
-        return drugDispenseRepository.save(drugDispense);
+    public List<DrugDispenseDTO> getPatientDispensingHistory(Long patientId) {
+        validatePatientExists(patientId);
+        List<DrugDispense> dispensings = drugDispensingRepository.findByPatientIdAndArchived(patientId, 0);
+        return drugDispenseMapper.toDTOList(dispensings);
     }
 
-    public Integer delete(Long id) {
-        DrugDispense drugDispense = drugDispenseRepository
-                .findByIdAndArchived(id, UN_ARCHIVED)
-                .orElseThrow(() -> new EntityNotFoundException(DrugDispense.class, "Id", id + ""));
 
-        drugDispense.setArchived(ARCHIVED);
-        //TODO: Also archive the drug dispense
-        drugDispenseRepository.save(drugDispense);
-        return drugDispense.getArchived();
-    }
+    public Page<DispensingHistoryProjection> getDispensingHistory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
+        String startDateStr = null;
+        String endDateStr = null;
 
-    public List<PatientDrugDispenseDTO> getAllDrugDispenseForAPatient(Long patientId) {
-        Map<Long, List<DrugDispense>> drugDispenseMap = drugDispenseRepository
-                .findAllByPatientIdGroupByIdOrderById(patientId)
-                .stream()
-                .sorted(Comparator.comparingLong(DrugDispense::getDrugOrderId).reversed())
-                .collect(groupingBy(DrugDispense::getDrugOrderId));
-
-        return getPatientDrugOrders(drugDispenseMap, patientId);
-    }
-
-    public List<PatientDrugDispenseDTO> getAllDrugDispenseForAPatientByDrugOrderId(Long patientId, Long drugOrderId) {
-        Map<Long, List<DrugDispense>> drugDispenseMap = drugDispenseRepository
-                .findAllDrugDispenseForAPatientByDrugOrderId(patientId, drugOrderId)
-                .stream()
-                .sorted(Comparator.comparingLong(DrugDispense::getDrugOrderId).reversed())
-                .collect(groupingBy(DrugDispense::getDrugOrderId));
-
-        return getPatientDrugOrders(drugDispenseMap, patientId);
-    }
-
-    private List<PatientDrugDispenseDTO> getPatientDrugOrders(Map<Long, List<DrugDispense>> drugDispenseMap, Long patientId){
-        List<PatientDrugDispenseDTO> patientDrugDispenseDTOS = new ArrayList<>();
-        if(patientId != null){
-            //PatientDrugDispenseDTO patientDrugDispenseDTO = (PatientDrugDispenseDTO) patientDetailService.setDTO(patientId);
-            patientDrugDispenseDTOS.add((PatientDrugDispenseDTO) patientDetailService.setDTO(patientId));
+        if (startDate != null) {
+            startDateStr = startDate.format(FORMATTER);
         }
-        drugDispenseMap.forEach((k,v) ->{
-            final PatientDrugDispenseDTO[] patientDrugDispenseDTO = {new PatientDrugDispenseDTO()};
-            patientDrugDispenseDTO[0].setDrugDispenses(v.stream()
-                    .map(drugDispense -> {
-                        if (patientDrugDispenseDTO[0].getPatientId() == null) {
-                            patientDrugDispenseDTO[0] = (PatientDrugDispenseDTO) patientDetailService.setDTO(drugDispense.getPatientId());
-                        }
-                        return drugDispense;
-                    })
-                    .sorted(Comparator.comparingLong(DrugDispense::getId).reversed())
-                    .collect(Collectors.toList()));
-            patientDrugDispenseDTOS.add(patientDrugDispenseDTO[0]);
-        });
 
+        if (endDate != null) {
+            if (endDate.getHour() == 0 && endDate.getMinute() == 0 && endDate.getSecond() == 0) {
+                endDate = endDate.withHour(23).withMinute(59).withSecond(59);
+            }
+            endDateStr = endDate.format(FORMATTER);
+        }
 
-        return patientDrugDispenseDTOS;
+        return drugDispensingRepository.getDispensingHistory(startDateStr, endDateStr, pageable);
     }
 
-    public List<PatientDrugDispenseDTO> getAllDrugDispenseByDrugOrderId(Long drugOrderId) {
-        Map<Long, List<DrugDispense>> drugDispenseMap = drugDispenseRepository
-                .findAllDrugDispenseByDrugOrderId(drugOrderId)
-                .stream()
-                .sorted(Comparator.comparingLong(DrugDispense::getDrugOrderId).reversed())
-                .collect(groupingBy(DrugDispense::getDrugOrderId));
-        return getPatientDrugOrders(drugDispenseMap, null);
+    public void deleteDispensing(Long id) {
+        DrugDispense dispensing = drugDispensingRepository.findByIdAndArchived(id, 0)
+                .orElseThrow(() -> new EntityNotFoundException("Dispensing record not found with id: " + id));
+
+        dispensing.setArchived(1);
+        drugDispensingRepository.save(dispensing);
+
+
+        updateDrugOrderStatusAfterDeletion(dispensing.getDrugOrder().getId());
+
+        log.info("Archived dispensing record: {}", id);
     }
 
-    /*private PatientDrugDispenseDTO setDTO(Long patientId){
-        PatientDrugDispenseDTO patientDrugDispenseDTO = new PatientDrugDispenseDTO();
-        PersonResponseDto personResponseDTO = personService.getPersonById(patientId);
+    private void updateDrugOrderDispensingStatus(DrugOrder drugOrder, Integer totalDispensed) {
+        DispensingStatus newStatus;
+
+
+        Integer quantityPrescribed;
         try {
-            patientDrugDispenseDTO.setPatientId(patientId);
-            patientDrugDispenseDTO.setPatientDob(personResponseDTO.getDateOfBirth());
-            patientDrugDispenseDTO.setPatientLastName(personResponseDTO.getSurname());
-            patientDrugDispenseDTO.setPatientFirstName(personResponseDTO.getFirstName());
-            patientDrugDispenseDTO
-                    .setPatientHospitalNumber(jsonNodeTransformer
-                            .getNodeValue(personResponseDTO
-                                    .getIdentifier(), "identifier", "value", true));
-
-            patientDrugDispenseDTO
-                    .setPatientAddress(jsonNodeTransformer
-                            .getNodeValue(personResponseDTO
-                                    .getAddress(), "address", "city", true));
-
-            patientDrugDispenseDTO
-                    .setPatientGender(jsonNodeTransformer
-                            .getNodeValue(personResponseDTO
-                                    .getGender(), null, "display", false));
-
-            patientDrugDispenseDTO
-                    .setPatientPhoneNumber(jsonNodeTransformer
-                            .getNodeValue(personResponseDTO
-                                            .getContactPoint(),
-                    "contactPoint", "value", true));
-        }catch (Exception e){
-            e.printStackTrace();
+            quantityPrescribed = Integer.valueOf(drugOrder.getQuantityPrescribed());
+        } catch (NumberFormatException e) {
+           log.error("Invalid quantity prescribed format: {}", drugOrder.getQuantityPrescribed());
+            return;
         }
 
-        return patientDrugDispenseDTO;
+        if (totalDispensed.equals(quantityPrescribed)) {
+            newStatus = DispensingStatus.FULLY_DISPENSED;
+        } else if (totalDispensed > 0) {
+            newStatus = DispensingStatus.PARTIALLY_DISPENSED;
+        } else {
+            newStatus = DispensingStatus.PENDING;
+        }
 
-    }*/
+        drugOrderRepository.updateDispensingStatus(drugOrder.getId(), newStatus);
+    }
+
+    private void updateDrugOrderStatusAfterDeletion(Long drugOrderId) {
+        Integer totalDispensed = drugDispensingRepository.getTotalQuantityDispensed(drugOrderId);
+        DrugOrder drugOrder = drugOrderRepository.findById(drugOrderId)
+                .orElseThrow(() -> new EntityNotFoundException("Drug order not found"));
+
+        updateDrugOrderDispensingStatus(drugOrder, totalDispensed != null ? totalDispensed : 0);
+    }
+
+    private void validatePatientExists(Long patientId) {
+        if (patientId <= 0) {
+            throw new IllegalArgumentException("Invalid patient ID");
+        }
+
+        if (!personService.isPersonExist(patientId)) {
+            throw new EntityNotFoundException("Patient not found with id: " + patientId);
+        }
+    }
 }
