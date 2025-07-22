@@ -15,6 +15,7 @@ import org.lamisplus.modules.pharmacy.domain.entity.DrugDispense;
 import org.lamisplus.modules.pharmacy.domain.entity.DrugOrder;
 import org.lamisplus.modules.pharmacy.domain.mapper.DrugDispenseMapper;
 import org.lamisplus.modules.pharmacy.domain.projections.DispensingHistoryProjection;
+import org.lamisplus.modules.pharmacy.domain.projections.DrugDispenseProjection;
 import org.lamisplus.modules.pharmacy.repository.DrugDispenseRepository;
 import org.lamisplus.modules.pharmacy.repository.DrugOrderRepository;
 import org.lamisplus.modules.pharmacy.util.JsonNodeTransformer;
@@ -81,7 +82,7 @@ public class DrugDispenseService {
         DrugDispense dispensing = drugDispenseMapper.toEntity(dto);
 
         dispensing.setDrugOrder(drugOrder);
-        dispensing.setPatient(patient); // Use patient from order
+        dispensing.setPatient(patient);
         dispensing.setMedicationName(drugOrder.getMedicationName());
         dispensing.setFormulation(drugOrder.getFormulation());
         dispensing.setStrength(drugOrder.getStrength());
@@ -137,30 +138,47 @@ public class DrugDispenseService {
         List<DrugDispense> dispensings = drugDispensingRepository.findByDrugOrderIdAndArchived(drugOrderId, 0);
         return drugDispenseMapper.toDTOList(dispensings);
     }
+//@Transactional
+public Page<DrugDispenseDTO> getPatientDispensingHistory(Long patientId, Pageable pageable) {
+    Page<DrugDispenseProjection> projections = drugDispensingRepository
+            .findDispenseHistoryByPatientId(patientId, pageable);
 
-    public List<DrugDispenseDTO> getPatientDispensingHistory(Long patientId) {
-        validatePatientExists(patientId);
-        List<DrugDispense> dispensings = drugDispensingRepository.findByPatientIdAndArchived(patientId, 0);
-        return drugDispenseMapper.toDTOList(dispensings);
+    if (projections.isEmpty()) {
+        throw new EntityNotFoundException("No dispensing history found for patient with ID: " + patientId);
+    }
+
+    return projections.map(this::mapProjectionToDTO);
+}
+
+
+    private DrugDispenseDTO mapProjectionToDTO(DrugDispenseProjection p) {
+        DrugDispenseDTO dto = new DrugDispenseDTO();
+        dto.setId(p.getId());
+        dto.setUuid(p.getUuid());
+        dto.setMedicationName(p.getMedicationName());
+        dto.setBrandName(p.getBrandName());
+        dto.setManufacturer(p.getManufacturer());
+        dto.setBatchNumber(p.getBatchNumber());
+        dto.setExpiryDate(p.getExpiryDate());
+        dto.setQuantityDispensed(p.getQuantityDispensed());
+        dto.setQuantityUnit(p.getQuantityUnit());
+        dto.setFormulation(p.getFormulation());
+        dto.setStrength(p.getStrength());
+        dto.setDateTimeDispensed(p.getDateTimeDispensed());
+        dto.setDispensedBy(p.getDispensedBy());
+        dto.setDispenserName(p.getDispenserName());
+        dto.setSubstitutionMade(p.getSubstitutionMade());
+        dto.setSubstitutionReason(p.getSubstitutionReason());
+        dto.setDispensingNotes(p.getDispensingNotes());
+        dto.setIsRefill(p.getIsRefill());
+        dto.setRefillNumber(p.getRefillNumber());
+        return dto;
     }
 
 
-    public Page<DispensingHistoryProjection> getDispensingHistory(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        String startDateStr = null;
-        String endDateStr = null;
+    public Page<DispensingHistoryProjection> getDispensingHistory(Pageable pageable) {
 
-        if (startDate != null) {
-            startDateStr = startDate.format(FORMATTER);
-        }
-
-        if (endDate != null) {
-            if (endDate.getHour() == 0 && endDate.getMinute() == 0 && endDate.getSecond() == 0) {
-                endDate = endDate.withHour(23).withMinute(59).withSecond(59);
-            }
-            endDateStr = endDate.format(FORMATTER);
-        }
-
-        return drugDispensingRepository.getDispensingHistory(startDateStr, endDateStr, pageable);
+        return drugDispensingRepository.getDispensingHistory( pageable);
     }
 
     public void deleteDispensing(Long id) {

@@ -3,6 +3,7 @@ package org.lamisplus.modules.pharmacy.repository;
 import org.lamisplus.modules.pharmacy.domain.entity.DrugDispense;
 import org.lamisplus.modules.pharmacy.domain.projections.DispensationQueueProjection;
 import org.lamisplus.modules.pharmacy.domain.projections.DispensingHistoryProjection;
+import org.lamisplus.modules.pharmacy.domain.projections.DrugDispenseProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -23,6 +24,8 @@ public interface DrugDispenseRepository extends JpaRepository<DrugDispense, Long
     List<DrugDispense> findByDrugOrderIdAndArchived(Long drugOrderId, Integer archived);
 
     List<DrugDispense> findByPatientIdAndArchived(Long patientId, Integer archived);
+
+
 
     @Query("SELECT SUM(dd.quantityDispensed) FROM DrugDispense dd WHERE dd.drugOrder.id = :orderId AND dd.archived = 0")
     Integer getTotalQuantityDispensed(@Param("orderId") Long orderId);
@@ -83,17 +86,44 @@ public interface DrugDispenseRepository extends JpaRepository<DrugDispense, Long
             "INNER JOIN drug_order drug_ord ON dd.drug_order_id = drug_ord.id " +
             "INNER JOIN patient_person p ON dd.patient_id = p.id " +
             "WHERE dd.archived = 0 " +
-            "AND (?1 IS NULL OR dd.date_time_dispensed >= CAST(?1 AS TIMESTAMP)) " +
-            "AND (?2 IS NULL OR dd.date_time_dispensed <= CAST(?2 AS TIMESTAMP)) " +
+
             "ORDER BY dd.date_time_dispensed DESC",
 
-            countQuery = "SELECT COUNT(*) FROM drug_dispense dd WHERE dd.archived = 0 " +
-                    "AND (?1 IS NULL OR dd.date_time_dispensed >= CAST(?1 AS TIMESTAMP)) " +
-                    "AND (?2 IS NULL OR dd.date_time_dispensed <= CAST(?2 AS TIMESTAMP))",
+            countQuery = "SELECT COUNT(*) FROM drug_dispense dd WHERE dd.archived = 0 " ,
             nativeQuery = true)
-    Page<DispensingHistoryProjection> getDispensingHistory(
-            String startDate,
-            String endDate,
+    Page<DispensingHistoryProjection> getDispensingHistory(Pageable pageable);
+
+    @Query(value = "SELECT " +
+            "dd.id, " +
+            "dd.uuid, " +
+            "dd.medication_name AS medicationName, " +
+            "dd.brand_name AS brandName, " +
+            "dd.manufacturer, " +
+            "dd.batch_number AS batchNumber, " +
+            "dd.expiry_date AS expiryDate, " +
+            "dd.quantity_dispensed AS quantityDispensed, " +
+            "dd.quantity_unit AS quantityUnit, " +
+            "dd.formulation, " +
+            "dd.strength, " +
+            "dd.date_time_dispensed AS dateTimeDispensed, " +
+            "dd.dispensed_by AS dispensedBy, " +
+            "dd.dispenser_name AS dispenserName, " +
+            "dd.substitution_made AS substitutionMade, " +
+            "dd.substitution_reason AS substitutionReason, " +
+            "dd.dispensing_notes AS dispensingNotes, " +
+            "dd.is_refill AS isRefill, " +
+            "dd.refill_number AS refillNumber " +
+            "FROM drug_dispense dd " +
+            "WHERE dd.patient_id = :patientId " +
+            "AND (dd.archived = 0 OR dd.archived IS NULL) " +
+            "ORDER BY dd.date_time_dispensed DESC",
+            countQuery = "SELECT COUNT(*) " +
+                    "FROM drug_dispense dd " +
+                    "WHERE dd.patient_id = :patientId " +
+                    "AND (dd.archived = 0 OR dd.archived IS NULL)",
+            nativeQuery = true)
+    Page<DrugDispenseProjection> findDispenseHistoryByPatientId(
+            @Param("patientId") Long patientId,
             Pageable pageable);
 
 }

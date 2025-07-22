@@ -32,7 +32,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/drug-dispensing")
+@RequestMapping("/api/v1/drug-dispensing")
 public class DrugDispenseController {
 
     private static final Logger log = LoggerFactory.getLogger(DrugDispenseController.class);
@@ -51,14 +51,14 @@ public class DrugDispenseController {
         return ResponseEntity.status(HttpStatus.CREATED).body(dispensed);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update/{id}")
     public ResponseEntity<DrugDispenseDTO> updateDispensing(@PathVariable Long id, @Valid @RequestBody DrugDispenseDTO dto) {
         log.info("Updating dispensing record: {}", id);
         DrugDispenseDTO updated = drugDispensingService.updateDispensing(id, dto);
         return ResponseEntity.ok(updated);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get-dispense/{id}")
     public ResponseEntity<DrugDispenseDTO> getDispensing(@PathVariable Long id) {
         DrugDispenseDTO dispensing = drugDispensingService.getDispensingById(id);
         return ResponseEntity.ok(dispensing);
@@ -71,26 +71,29 @@ public class DrugDispenseController {
     }
 
     @GetMapping("/patient/{patientId}")
-    public ResponseEntity<List<DrugDispenseDTO>> getPatientDispensingHistory(@PathVariable Long patientId) {
-        List<DrugDispenseDTO> history = drugDispensingService.getPatientDispensingHistory(patientId);
+    public ResponseEntity<Page<DrugDispenseDTO>> getPatientDispensingHistory(
+            @PathVariable Long patientId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        Pageable pageable = PageRequest.of(page, size);
+        Page<DrugDispenseDTO> history = drugDispensingService.getPatientDispensingHistory(patientId, pageable);
         return ResponseEntity.ok(history);
     }
 
     @GetMapping("/history")
     public ResponseEntity<Page<DispensingHistoryProjection>> getDispensingHistory(
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("dateTimeDispensed").descending());
-        Page<DispensingHistoryProjection> history = drugDispensingService.getDispensingHistory(startDate, endDate, pageable);
+        Page<DispensingHistoryProjection> history = drugDispensingService.getDispensingHistory( pageable);
         return ResponseEntity.ok(history);
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteDispensing(@PathVariable Long id) {
+    public ResponseEntity<String> deleteDispensing(@PathVariable Long id) {
         drugDispensingService.deleteDispensing(id);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok("Record deleted successfully.");
     }
 }

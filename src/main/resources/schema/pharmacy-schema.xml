@@ -24,45 +24,7 @@
         </createTable>
     </changeSet>
 
-    <changeSet failOnError="false" author="Emeka Ilozue" id="1652433182071-pharmacy-25">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <tableExists tableName="drug_order"/>
-            </not>
-        </preConditions>
-        <sql>
-            CREATE TABLE drug_order
-            (
-            id bigint NOT NULL GENERATED ALWAYS AS IDENTITY ( INCREMENT 1 START 1 MINVALUE 1 MAXVALUE 9223372036854775807 CACHE 1 ),
-            prescription_group_id character varying NOT NULL,
-            uuid character varying,
-            drug_name character varying,
-            dosage_strength character varying,
-            dosage_strength_unit character varying,
-            comments character varying,
-            ordered_by character varying,
-            duration character varying,
-            patient_id bigint,
-            start_date date,
-            duration_unit character varying,
-            date_time_prescribed timestamp without time zone,
-            brand character varying,
-            dosage_frequency integer,
-            type character varying,
-            created_by character varying,
-            date_created timestamp without time zone,
-            modified_by character varying,
-            date_modified timestamp without time zone,
-            organisation_unit_id bigint,
-            archived integer,
-            visit_id bigint,
-            other_details jsonb,
-            status integer,
-            encounter_date_time timestamp without time zone,
-            CONSTRAINT drug_order_pkey PRIMARY KEY (id)
-            )
-        </sql>
-    </changeSet>
+
 
     <changeSet failOnError="false" author="Emeka Ilozue" id="1652433182071-pharmacy-26">
         <preConditions onFail="MARK_RAN">
@@ -111,12 +73,45 @@
 
 
 
-    <changeSet id="update-drug-order-table" author="Graceman">
-        <preConditions>
-            <tableExists tableName="drug_order"/>
+
+    <changeSet failOnError="false" author="Emeka Ilozue" id="1652433182071-pharmacy-32">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="drug_group_id_fk" />
+            </not>
         </preConditions>
-        <dropForeignKeyConstraint baseTableName="drug_dispense" constraintName="drug_order_id_fk"/>
+        <addForeignKeyConstraint baseColumnNames="drug_group_id" baseTableName="drug" constraintName="drug_group_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="drug_group"/>
+    </changeSet>
+
+
+
+    <changeSet failOnError="false" author="Emeka Ilozue" id="1652433182071-pharmacy-34">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="drug_order_id_fk" />
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseColumnNames="drug_order_id" baseTableName="drug_dispense" constraintName="drug_order_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="drug_order"/>
+    </changeSet>
+
+
+    <changeSet id="drop-and-recreate-drug-order-and-dispense-tables" author="Graceman">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="drug_order"/>
+            <tableExists tableName="drug_dispense"/>
+        </preConditions>
+
+        <dropForeignKeyConstraint baseTableName="drug_dispense"
+                                  constraintName="fk_drug_dispense_drug_order"/>
+        <dropForeignKeyConstraint baseTableName="drug_dispense"
+                                  constraintName="fk_drug_dispense_patient"/>
+        <dropForeignKeyConstraint baseTableName="drug_order"
+                                  constraintName="fk_drug_order_patient"/>
+        <dropForeignKeyConstraint baseTableName="drug_order"
+                                  constraintName="fk_drug_order_visit"/>
+
         <dropTable tableName="drug_order"/>
+        <dropTable tableName="drug_dispense"/>
 
         <createTable tableName="drug_order">
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -128,16 +123,12 @@
             <column name="patient_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="encounter_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
             <column name="visit_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
             <column name="medication_name" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="generic_name" type="VARCHAR(255)"/>
             <column name="formulation" type="VARCHAR(255)"/>
             <column name="strength" type="VARCHAR(255)"/>
             <column name="dosage_amount" type="VARCHAR(255)"/>
@@ -158,50 +149,21 @@
             </column>
             <column name="start_date" type="TIMESTAMP"/>
             <column name="end_date" type="TIMESTAMP"/>
-            <column name="order_status" type="VARCHAR(50)"/>
-            <column name="dispensing_status" type="VARCHAR(50)"/>
+            <column name="order_status" type="VARCHAR(50)" defaultValue="ACTIVE"/>
+            <column name="dispensing_status" type="VARCHAR(50)" defaultValue="PENDING"/>
             <column name="archived" type="INT" defaultValue="0"/>
             <column name="organisation_unit_id" type="BIGINT"/>
-            <column name="created_date" type="DATE"/>
-            <column name="modified_date" type="DATE"/>
+
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_created" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="VARCHAR(255)"/>
+            <column name="date_modified" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
         </createTable>
 
-        <addForeignKeyConstraint baseTableName="drug_order"
-                                 baseColumnNames="patient_id"
-                                 constraintName="fk_drug_order_patient"
-                                 referencedTableName="patient"
-                                 referencedColumnNames="id"/>
-
-        <addForeignKeyConstraint baseTableName="drug_order"
-                                 baseColumnNames="visit_id"
-                                 constraintName="fk_drug_order_visit"
-                                 referencedTableName="visit"
-                                 referencedColumnNames="id"/>
-
-        <createIndex tableName="drug_order" indexName="idx_drug_order_patient_id">
-            <column name="patient_id"/>
-        </createIndex>
-
-        <createIndex tableName="drug_order" indexName="idx_drug_order_visit_id">
-            <column name="visit_id"/>
-        </createIndex>
-
-        <createIndex tableName="drug_order" indexName="idx_drug_order_medication_name">
-            <column name="medication_name"/>
-        </createIndex>
-
-        <createIndex tableName="drug_order" indexName="idx_drug_order_archived">
-            <column name="archived"/>
-        </createIndex>
-
-        <sql>SELECT pg_catalog.setval('public.drug_order_id_seq', 1, true);</sql>
-    </changeSet>
-
-    <changeSet id="update-drug-dispense-table" author="Graceman">
-        <preConditions>
-            <tableExists tableName="drug_dispense"/>
-        </preConditions>
-        <dropTable tableName="drug_dispense"/>
 
         <createTable tableName="drug_dispense">
             <column name="id" type="BIGINT" autoIncrement="true">
@@ -243,9 +205,29 @@
             <column name="refill_number" type="INT"/>
             <column name="archived" type="INT" defaultValue="0"/>
             <column name="organisation_unit_id" type="BIGINT"/>
-            <column name="created_date" type="DATE"/>
-            <column name="modified_date" type="DATE"/>
+
+            <column name="created_by" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date_created" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+            <column name="modified_by" type="VARCHAR(255)"/>
+            <column name="date_modified" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP"/>
         </createTable>
+
+
+        <addForeignKeyConstraint baseTableName="drug_order"
+                                 baseColumnNames="patient_id"
+                                 constraintName="fk_drug_order_patient"
+                                 referencedTableName="patient"
+                                 referencedColumnNames="id"/>
+
+        <addForeignKeyConstraint baseTableName="drug_order"
+                                 baseColumnNames="visit_id"
+                                 constraintName="fk_drug_order_visit"
+                                 referencedTableName="visit"
+                                 referencedColumnNames="id"/>
 
         <addForeignKeyConstraint baseTableName="drug_dispense"
                                  baseColumnNames="drug_order_id"
@@ -259,51 +241,41 @@
                                  referencedTableName="patient"
                                  referencedColumnNames="id"/>
 
-        <createIndex tableName="drug_dispense" indexName="idx_drug_dispense_drug_order_id">
-            <column name="drug_order_id"/>
-        </createIndex>
-
-        <createIndex tableName="drug_dispense" indexName="idx_drug_dispense_patient_id">
+        <createIndex tableName="drug_order" indexName="idx_drug_order_patient_id">
             <column name="patient_id"/>
         </createIndex>
-
-        <createIndex tableName="drug_dispense" indexName="idx_drug_dispense_medication_name">
+        <createIndex tableName="drug_order" indexName="idx_drug_order_visit_id">
+            <column name="visit_id"/>
+        </createIndex>
+        <createIndex tableName="drug_order" indexName="idx_drug_order_medication_name">
             <column name="medication_name"/>
         </createIndex>
-
-        <createIndex tableName="drug_dispense" indexName="idx_drug_dispense_archived">
+        <createIndex tableName="drug_order" indexName="idx_drug_order_archived">
             <column name="archived"/>
         </createIndex>
 
+
+        <createIndex tableName="drug_dispense" indexName="idx_drug_dispense_drug_order_id">
+            <column name="drug_order_id"/>
+        </createIndex>
+        <createIndex tableName="drug_dispense" indexName="idx_drug_dispense_patient_id">
+            <column name="patient_id"/>
+        </createIndex>
+        <createIndex tableName="drug_dispense" indexName="idx_drug_dispense_medication_name">
+            <column name="medication_name"/>
+        </createIndex>
+        <createIndex tableName="drug_dispense" indexName="idx_drug_dispense_archived">
+            <column name="archived"/>
+        </createIndex>
         <createIndex tableName="drug_dispense" indexName="idx_drug_dispense_date_time_dispensed">
             <column name="date_time_dispensed"/>
         </createIndex>
 
+
+        <sql>SELECT pg_catalog.setval('public.drug_order_id_seq', 1, true);</sql>
+
         <sql>SELECT pg_catalog.setval('public.drug_dispense_id_seq', 1, true);</sql>
     </changeSet>
-
-
-
-    <changeSet failOnError="false" author="Emeka Ilozue" id="1652433182071-pharmacy-32">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <foreignKeyConstraintExists foreignKeyName="drug_group_id_fk" />
-            </not>
-        </preConditions>
-        <addForeignKeyConstraint baseColumnNames="drug_group_id" baseTableName="drug" constraintName="drug_group_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="drug_group"/>
-    </changeSet>
-
-
-
-    <changeSet failOnError="false" author="Emeka Ilozue" id="1652433182071-pharmacy-34">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <foreignKeyConstraintExists foreignKeyName="drug_order_id_fk" />
-            </not>
-        </preConditions>
-        <addForeignKeyConstraint baseColumnNames="drug_order_id" baseTableName="drug_dispense" constraintName="drug_order_id_fk" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="drug_order"/>
-    </changeSet>
-
 
 
 </databaseChangeLog>
