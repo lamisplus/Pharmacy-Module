@@ -1,15 +1,16 @@
-import React, {useEffect, useState} from 'react';
+import React, { useEffect, useState } from 'react';
 import MaterialTable from 'material-table';
 
 import { Link } from 'react-router-dom'
 import VisibilityIcon from '@material-ui/icons/Visibility';
 import Tooltip from '@material-ui/core/Tooltip';
 import IconButton from '@material-ui/core/IconButton';
- import axios from "axios";
-import { url as baseUrl, token as token  } from "../../../api";
-import {PrescriptionObj} from './PrescriptionObj';
+import axios from "axios";
+import { url as baseUrl, token as token } from "../../../api";
+import { PrescriptionObj } from './PrescriptionObj';
 import SplitActionButton from '../../layouts/SplitActionButton';
-import {FaEye, FaUserPlus} from "react-icons/fa";
+import { FaEye, FaUserPlus } from "react-icons/fa";
+
 
 import { forwardRef } from 'react';
 
@@ -28,41 +29,46 @@ import Remove from '@material-ui/icons/Remove';
 import SaveAlt from '@material-ui/icons/SaveAlt';
 import Search from '@material-ui/icons/Search';
 import ViewColumn from '@material-ui/icons/ViewColumn';
+import { useGetDispenseHistory } from '../../hooks/useGetDispenseHistory';
+import { MTableToolbar } from "material-table";
+
 
 const tableIcons = {
-Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
-Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
-Clear: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref} />),
-DetailPanel: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
-Edit: forwardRef((props, ref) => <Edit {...props} ref={ref} />),
-Export: forwardRef((props, ref) => <SaveAlt {...props} ref={ref} />),
-Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref} />),
-FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref} />),
-LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref} />),
-NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
-PreviousPage: forwardRef((props, ref) => <ChevronLeft {...props} ref={ref} />),
-ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
-Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
-SortArrow: forwardRef((props, ref) => <ArrowUpward {...props} ref={ref} />),
-ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
-ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
+    Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
+    Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
+    Clear: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
+    Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref} />),
+    DetailPanel: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
+    Edit: forwardRef((props, ref) => <Edit {...props} ref={ref} />),
+    Export: forwardRef((props, ref) => <SaveAlt {...props} ref={ref} />),
+    Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref} />),
+    FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref} />),
+    LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref} />),
+    NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
+    PreviousPage: forwardRef((props, ref) => <ChevronLeft {...props} ref={ref} />),
+    ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
+    Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
+    SortArrow: forwardRef((props, ref) => <ArrowUpward {...props} ref={ref} />),
+    ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
+    ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
 };
 
 const DispenseList = (props) => {
-  const [currentPage,setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1);
+    const { fetchDispenseHistory } = useGetDispenseHistory();
+    const [showPPI, setShowPPI] = useState(true);
 
-  function actionItems(prescription){
-        console.log(prescription);
-        return  [
+    function actionItems(prescription) {
+
+        return [
             {
-                type:'single',
-                actions:[
+                type: 'single',
+                actions: [
                     {
-                        name:'Dashboard',
-                        type:'link',
-                        icon:<FaEye  size="22"/>,
-                        to:{
+                        name: 'Dashboard',
+                        type: 'link',
+                        icon: <FaEye size="22" />,
+                        to: {
                             pathname: "/prescriptions",
                             state: prescription
                         }
@@ -73,92 +79,141 @@ const DispenseList = (props) => {
         ]
     }
 
-    const getData = query =>
-      new Promise((resolve, reject) => {
-           axios.get(`${baseUrl}drug-dispenses?searchParam=${query.search}&pageNo=${query.page}&pageSize=${query.pageSize}`, { headers: {"Authorization" : `Bearer ${token}`} })
-                  .then(resp => resp)
-                  .then(result => {
-                  if (result.data.records === null) {
-                     resolve({
-                        data: [],
-                        page: 0,
-                        totalCount: 0
-                    })
-                  }else{
-                       resolve({
-                          data: result.data.records.map((row) => ({
-                            name: row.drugName,
-                            dosageStrength: row.dosageStrength + " " + row.dosageStrengthUnit,
-                            quantity: row.quantity,
-                            unit: row.unit,
-                            dateTimeDispensed: row.dateTimeDispensed.replace("@", " "),
-                          })),
-                          page: query.page,
-                          totalCount: result.data.totalRecords
-                      });
-                  }
-               })
-      })
+    const getData = async (query) => {
+        try {
+            const data = await fetchDispenseHistory(query);
+            return {
+                data: data?.content,
+                page: query?.pageNumber || 0,
+                totalCount: data?.content?.length || 0,
+            };
+        } catch (error) {
+            return {
+                data: [],
+                page: 0,
+                totalCount: 0,
+            };
+        }
+    };
 
-      const handleChangePage = (page) => {
-           setCurrentPage(page + 1);
-       };
 
-       const localization = {
-           pagination: {
-               labelDisplayedRows: `Page: ${currentPage}`
-           }
-       }
 
-  return (
-    <div>
-      <MaterialTable
-       icons={tableIcons}
-        title="Patient's Dispense History"
-        columns={[
-//          { title: "Patient ID", field: "Id" },
-          {
-            title: "Drug Name",
-            field: "name",
-          },
-          { title: "Dosage Strength", field: "dosageStrength"},
-          {
-            title: "Total Quanity",
-            field: "quantity",
-            filtering: false,
-          },
-          {
-              title: "Unit",
-              field: "unit",
-            },
-          {
-            title: "Date Time Dispensed",
-            field: "dateTimeDispensed",
-            filtering: false,
-          },
-        ]}
-        data={ getData }
-          options={{
-            headerStyle: {
-                backgroundColor: "#014d88",
-                color: "#fff"
-            },
-            searchFieldStyle: {
-                width : '300%',
-                margingLeft: '250px',
-            },
-            filtering: false,
-            exportButton: false,
-            searchFieldAlignment: 'left',
-            pageSizeOptions:[10,20,100],
-            pageSize:10,
-            debounceInterval: 400
-        }}
-        onChangePage={handleChangePage}
-        localization={localization}
-      />
-    </div>
-  );
+    const CustomToolbar = (props) => (
+        <div>
+            <div className="form-check custom-checkbox float-left mt-4 ml-3">
+                <input
+                    type="checkbox"
+                    className="form-check-input"
+                    name="showPPI"
+                    id="showPPI"
+                    value="showPPI"
+                    checked={!showPPI}
+                    onChange={() => setShowPPI(!showPPI)}
+                    style={{
+                        border: "1px solid #014D88",
+                        borderRadius: "0.25rem",
+                    }}
+                />
+                <label className="form-check-label" htmlFor="basic_checkbox_1">
+                    <b style={{ color: "#014d88", fontWeight: "bold" }}>SHOW PII</b>
+                </label>
+            </div>
+            <MTableToolbar {...props} />
+        </div>
+    );
+
+
+    const handleChangePage = (page) => {
+        setCurrentPage(page + 1);
+    };
+
+    const localization = {
+        pagination: {
+            labelDisplayedRows: `Page: ${currentPage}`
+        }
+    }
+
+    return (
+        <div>
+            <MaterialTable
+                icons={tableIcons}
+                title="Dispense History"
+                columns={[
+                    {
+                        title: "Patient Name",
+                        field: "fullname",
+                        hidden: showPPI,
+                        render: (rowData) => (
+                            <p>
+                                {`${rowData?.patientFirstName} ${rowData?.patientFirstName || rowData?.lastName || ""}`}
+                            </p>
+                        ),
+                    },
+                    {
+                        title: "Brand Name",
+                        field: "brandName",
+                    },
+                    { title: "Medication Name", field: "medicationName" },
+                    {
+                        title: "Hosp. Number",
+                        field: "patientHospitalNumber",
+                        filtering: false,
+                    },
+                    {
+                        title: "Prescription Date",
+                        field: "prescriptionDate",
+                    },
+                    {
+                        title: "Quantity Unit",
+                        field: "quantityUnit",
+                        filtering: false,
+                    },
+                    {
+                        title: "Quantity Dispensed",
+                        field: "quantityDispensed",
+                        filtering: false,
+                    },
+                    {
+                        title: "Frequency",
+                        field: "frequency",
+                        filtering: false,
+                    },
+                    {
+                        title: "Strength",
+                        field: "strength",
+                        filtering: false,
+                    },
+                    {
+                        title: "Date Dispensed",
+                        field: "dateTimeDispensed",
+                        filtering: false,
+                    },
+                ]}
+                data={getData || []}
+                options={{
+                    headerStyle: {
+                        backgroundColor: "#014d88",
+                        color: "#fff"
+                    },
+                    searchFieldStyle: {
+                        width: '300%',
+                        margingLeft: '250px',
+                    },
+                    filtering: false,
+                    exportButton: false,
+                    searchFieldAlignment: 'left',
+                    pageSizeOptions: [10, 20, 100],
+                    pageSize: 10,
+                    debounceInterval: 400
+                }}
+                onChangePage={handleChangePage}
+                localization={localization}
+                components={{
+                    Toolbar: CustomToolbar,
+                }}
+            />
+        </div>
+    );
 }
 
 export default DispenseList;

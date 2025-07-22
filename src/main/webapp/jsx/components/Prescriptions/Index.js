@@ -1,12 +1,16 @@
-import React,{useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import { withStyles } from '@material-ui/core/styles';
-
 import 'semantic-ui-css/semantic.min.css';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import PatientCardDetail from './../Patient/PatientCard';
 import PatientPrescriptions from './PatientPrescriptions';
 import { useHistory } from "react-router-dom";
+import axios from "axios"
+import { url, token } from '../../../api';
+import {  Tab, Tabs, } from "react-bootstrap";
+import MedicationHistory from '../Medication/MedicationHistory';
+
 
 const styles = theme => ({
   root: {
@@ -44,23 +48,54 @@ const styles = theme => ({
 });
 
 function PatientCard(props) {
-    let history = useHistory();
-    const [key, setKey] = useState('home');
-    const { classes } = props;
+  let history = useHistory();
+  const [key, setKey] = useState('drug-order');
+  const { classes } = props;
+  const [patientDrugOrder, setPatientDrugOrder] = useState([])
 
-    const patientObj = history.location && history.location.state ? history.location.state : {}
-    console.log(patientObj)
+
+  const patientObj = history.location && history.location.state ? history.location.state?.patientObj : {}
+
+  const fetchPatientDrugOrder = (patientId) => {
+    axios.get(`${url}drug-orders/get-patient-drugOrder/${patientId}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }).then((res) => {
+      setPatientDrugOrder(res?.data)
+    }).catch((err) => {
+      console.log(err)
+    })
+  }
+
+  useEffect(() => {
+    fetchPatientDrugOrder(patientObj?.id)
+  }, [])
+
   return (
     <div className={classes.root}>
-        
-        <Card >
-        <CardContent>
-        <PatientCardDetail patientObj={patientObj}/>
-        <br/>
-           
-        <PatientPrescriptions  patientObj={patientObj}/> 
 
-         </CardContent>
+      <Card >
+        <CardContent>
+          <PatientCardDetail patientObj={patientObj} />
+          <Tabs
+            id="controlled-tab-example"
+            activeKey={key}
+            onSelect={(k) => setKey(k)}
+            className="mb-3"
+            style={{marginTop: 30}}
+          >
+            <Tab eventKey="drug-order" title="Drug Order">
+              <div >
+                <br />
+                <PatientPrescriptions patientObj={patientObj} patientDrugOrder={patientDrugOrder} />
+              </div>
+            </Tab>
+
+            <Tab eventKey="medical-history" title="Medical History">
+              <MedicationHistory patientObj={patientObj}/>
+            </Tab>
+          </Tabs>
+
+        </CardContent>
       </Card>
     </div>
   );
