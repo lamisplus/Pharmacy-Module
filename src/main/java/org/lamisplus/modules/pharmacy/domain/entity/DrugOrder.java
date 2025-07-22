@@ -50,14 +50,6 @@ public class DrugOrder extends Audit {
 
     @Column(name = "uuid", unique = true, nullable = false, updatable = false)
     private String uuid;
-//
-//    @NotNull
-//    @Column(name = "patient_id", nullable = false)
-//    private Long patientId;
-
-//    @NotNull
-//    @Column(name = "encounter_id", nullable = false)
-//    private Long encounterId;
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
@@ -75,23 +67,27 @@ public class DrugOrder extends Audit {
     private String medicationName;
 
 
+    @Column(name = "drug_brand_name")
+    private String drugBrandName;
+
+
     @Column(name = "formulation")
-    private String formulation; // Tablet, Capsule, Syrup, Injection
+    private String formulation;
 
     @Column(name = "strength")
-    private String strength; // 500mg, 125mg/5mL
+    private String strength;
 
     @Column(name = "dosage_amount")
-    private String dosageAmount; // 1 tablet, 5mL, 2 puffs
+    private String dosageAmount;
 
     @Column(name = "route_of_admin")
-    private String routeOfAdmin; // Oral, IV, IM, SC, Topical, Inhalation
+    private String routeOfAdmin;
 
     @Column(name = "frequency")
-    private String frequency; // Once daily, BID, TID, QID, Q4H, Q6H, Q8H, Q12H
+    private String frequency;
 
     @Column(name = "timing_instructions")
-    private String timingInstructions; // Before meals, After meals, With meals, At bedtime
+    private String timingInstructions;
 
     @Column(name = "duration")
     private String duration;
@@ -133,6 +129,9 @@ public class DrugOrder extends Audit {
 
     @Column(name = "end_date")
     private LocalDateTime endDate;
+
+    @Column(name = "encounter_date")
+    private LocalDateTime encounterDate;
 
     @Column(name = "order_status")
     @Enumerated(EnumType.STRING)

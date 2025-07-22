@@ -108,6 +108,9 @@ public class DrugDispense extends Audit {
     @Column(name = "dispensing_notes", columnDefinition = "TEXT")
     private String dispensingNotes;
 
+    @Column(name = "encounter_date")
+    private LocalDateTime encounterDate;
+
 
     @Column(name = "is_refill")
     private Boolean isRefill = false;

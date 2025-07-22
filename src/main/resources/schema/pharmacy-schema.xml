@@ -130,6 +130,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="formulation" type="VARCHAR(255)"/>
+            <column name="drug_brand_name" type="VARCHAR(255)"/>
             <column name="strength" type="VARCHAR(255)"/>
             <column name="dosage_amount" type="VARCHAR(255)"/>
             <column name="route_of_admin" type="VARCHAR(255)"/>
@@ -149,6 +150,7 @@
             </column>
             <column name="start_date" type="TIMESTAMP"/>
             <column name="end_date" type="TIMESTAMP"/>
+            <column name="encounter_date" type="TIMESTAMP"/>
             <column name="order_status" type="VARCHAR(50)" defaultValue="ACTIVE"/>
             <column name="dispensing_status" type="VARCHAR(50)" defaultValue="PENDING"/>
             <column name="archived" type="INT" defaultValue="0"/>
@@ -191,6 +193,7 @@
             <column name="quantity_unit" type="VARCHAR(255)"/>
             <column name="formulation" type="VARCHAR(255)"/>
             <column name="strength" type="VARCHAR(255)"/>
+            <column name="encounter_date" type="TIMESTAMP"/>
             <column name="date_time_dispensed" type="TIMESTAMP" defaultValueComputed="CURRENT_TIMESTAMP">
                 <constraints nullable="false"/>
             </column>

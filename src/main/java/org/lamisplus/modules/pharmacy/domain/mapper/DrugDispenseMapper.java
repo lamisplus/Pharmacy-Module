@@ -46,6 +46,7 @@ public class DrugDispenseMapper {
         dto.setDispensingNotes(entity.getDispensingNotes());
         dto.setIsRefill(entity.getIsRefill());
         dto.setRefillNumber(entity.getRefillNumber());
+        dto.setEncounterDate(entity.getEncounterDate());
 
         return dto;
     }
@@ -61,6 +62,7 @@ public class DrugDispenseMapper {
         entity.setUuid(dto.getUuid());
 
         entity.setMedicationName(dto.getMedicationName());
+        entity.setExpiryDate(dto.getExpiryDate());
         entity.setBrandName(dto.getBrandName());
         entity.setManufacturer(dto.getManufacturer());
         entity.setBatchNumber(dto.getBatchNumber());
@@ -91,6 +93,7 @@ public class DrugDispenseMapper {
         entity.setMedicationName(dto.getMedicationName());
         entity.setBrandName(dto.getBrandName());
         entity.setManufacturer(dto.getManufacturer());
+        entity.setEncounterDate(dto.getEncounterDate());
         entity.setBatchNumber(dto.getBatchNumber());
         entity.setExpiryDate(dto.getExpiryDate());
         entity.setQuantityDispensed(dto.getQuantityDispensed());

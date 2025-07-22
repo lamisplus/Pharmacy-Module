@@ -29,7 +29,7 @@ import java.util.Arrays;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/drug-orders")
+@RequestMapping("/api/v1/drug-orders")
 public class DrugOrderController {
 
     private static final Logger log = LoggerFactory.getLogger(DrugOrderController.class);

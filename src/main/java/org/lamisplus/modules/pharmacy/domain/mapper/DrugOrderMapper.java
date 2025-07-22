@@ -23,6 +23,8 @@ public class DrugOrderMapper {
        dto.setPatientId(entity.getPatient().getId());
        dto.setVisitId(entity.getVisit().getId());
         dto.setMedicationName(entity.getMedicationName());
+        dto.setDrugBrandName(entity.getDrugBrandName());
+        dto.setEncounterDate(entity.getEncounterDate());
         dto.setFormulation(entity.getFormulation());
         dto.setStrength(entity.getStrength());
         dto.setDosageAmount(entity.getDosageAmount());
@@ -59,6 +61,8 @@ public class DrugOrderMapper {
        // entity.setPatientId(dto.getPatientId());
       //  entity.setVisitId(dto.getVisitId());
         entity.setMedicationName(dto.getMedicationName());
+        entity.setEncounterDate(dto.getEncounterDate());
+        entity.setDrugBrandName(dto.getDrugBrandName());
         entity.setFormulation(dto.getFormulation());
         entity.setStrength(dto.getStrength());
         entity.setDosageAmount(dto.getDosageAmount());
@@ -96,6 +100,7 @@ public class DrugOrderMapper {
         entity.setMedicationName(dto.getMedicationName());
         entity.setFormulation(dto.getFormulation());
         entity.setStrength(dto.getStrength());
+        entity.setDrugBrandName(dto.getDrugBrandName());
         entity.setDosageAmount(dto.getDosageAmount());
         entity.setRouteOfAdmin(dto.getRouteOfAdmin());
         entity.setFrequency(dto.getFrequency());
@@ -103,6 +108,7 @@ public class DrugOrderMapper {
         entity.setDuration(dto.getDuration());
         entity.setDurationUnit(dto.getDurationUnit());
         entity.setQuantityPrescribed(dto.getQuantityPrescribed());
+        entity.setEncounterDate(dto.getEncounterDate());
 
 
 

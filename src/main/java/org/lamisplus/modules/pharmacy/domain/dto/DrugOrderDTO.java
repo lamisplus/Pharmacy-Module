@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.lamisplus.modules.pharmacy.domain.entity.DispensingStatus;
 import org.lamisplus.modules.pharmacy.domain.entity.OrderStatus;
 
+import javax.persistence.Column;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.time.LocalDate;
@@ -25,6 +26,7 @@ public class DrugOrderDTO {
 
     @NotBlank(message = "Medication name is required")
     private String medicationName;
+    private String drugBrandName;
 
     private String formulation;
     private String strength;
@@ -38,6 +40,8 @@ public class DrugOrderDTO {
     private String quantityUnit;
     private Integer refillsAllowed;
     private Integer refillsRemaining;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private LocalDateTime encounterDate;
 
     private String prescriptionType;
     private String notes;
@@ -45,6 +49,7 @@ public class DrugOrderDTO {
     private Long prescribedBy;
     private String prescriberName;
     private LocalDateTime prescriptionDate;
+    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
     private LocalDateTime startDate;
     private LocalDateTime endDate;
     private OrderStatus orderStatus;
