@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
     Modal, ModalHeader, ModalBody,
     Col, Input,
     FormGroup,
     Label, Card, CardBody
 } from 'reactstrap';
-
 import MatButton from '@material-ui/core/Button'
 import { makeStyles } from '@material-ui/core/styles'
 import SaveIcon from '@material-ui/icons/Save'
@@ -18,9 +17,7 @@ import { Row } from "react-bootstrap";
 import { Segment, } from 'semantic-ui-react'
 import { url as baseUrl, token } from "../../../api";
 import Moment from 'moment';
-import momentLocalizer from 'react-widgets-moment';
 import { useHistory } from 'react-router-dom';
-import { useGetPatientDrugOrder } from '../../hooks/useGetPatientDrugOrder';
 
 Moment.locale('en');
 //momentLocalizer();
@@ -85,10 +82,6 @@ const useStyles = makeStyles(theme => ({
 const DispenseModal = (props) => {
     const history = useHistory();
     const drugDetails = props && props.datasample ? props.datasample : {}
-
-    console.log("drug detail", drugDetails)
-
-
     const { buttonLabel, className } = props;
     const toggle = props.togglestatus
     const modal = props.modalstatus
@@ -97,7 +90,7 @@ const DispenseModal = (props) => {
     const [saving, setSaving] = useState(false);
     const [drugDispenseObj] = useState({ drugDispenses: [] })
     const [formValues, setFormValues] = useState({
-        drugOrderId: drugDetails?.drugOrderId ||drugDetails?.id,
+        drugOrderId: drugDetails?.drugOrderId || drugDetails?.id,
         patientId: drugDetails?.patientId,
         medicationName: drugDetails.medicationName,
         drugBrandName: drugDetails?.drugBrandName,
@@ -122,9 +115,14 @@ const DispenseModal = (props) => {
 
     const handleDispense = (e) => {
         e.preventDefault()
-        // drugDispenseObj.drugDispenses = [formValues]
-        // formValues.dateTimeDispensed = Moment(formValues.dateTimeDispensed).format("YYYY-MM-DD@HH:mm:ss")
         setSaving(true);
+
+        axios.put(
+            `${baseUrl}patient/visit/checkout/${drugDetails?.visitId}`,
+            { checkOutDate: Moment(new Date()).format("YYYY-MM-DD HH:mm") },
+            { headers: { Authorization: `Bearer ${token}` } }
+        )
+
         axios.post(`${baseUrl}drug-dispensing/dispense`, formValues,
             { headers: { "Authorization": `Bearer ${token}` } },
         )
@@ -203,7 +201,7 @@ const DispenseModal = (props) => {
                                                 className={classes.input}
                                             />
                                         </FormGroup>
-                                    </div> 
+                                    </div>
                                     {/* <div className="form-group mb-3 col-md-6">
                                         <FormGroup>
                                             <Label for="medicationName" className={classes.label}>Medication name</Label>

@@ -240,35 +240,33 @@ const PatientSearch = (props) => {
         )
       },
 
-      {
-        title: "Biometrics",
-        field: "biometricStatus",
-        render: (rowData) =>
-          rowData.biometricStatus === true ? (
-            <Label color="green" size="mini">
-              Biometric Captured
-            </Label>
-          ) : (
-            <Label color="red" size="mini">
-              No Biometric
-            </Label>
-          ),
-      },
-      {
-        title: "ART Status",
-        field: "currentStatus",
-        render: (rowData) => (
-          <Label color="blue" size="mini">
-            {rowData?.currentStatus || "Not Enrolled"}
-          </Label>
-        ),
-      },
+      // {
+      //   title: "Biometrics",
+      //   field: "biometricStatus",
+      //   render: (rowData) =>
+      //     rowData.biometricStatus === true ? (
+      //       <Label color="green" size="mini">
+      //         Biometric Captured
+      //       </Label>
+      //     ) : (
+      //       <Label color="red" size="mini">
+      //         No Biometric
+      //       </Label>
+      //     ),
+      // },
+      // {
+      //   title: "ART Status",
+      //   field: "currentStatus",
+      //   render: (rowData) => (
+      //     <Label color="blue" size="mini">
+      //       {rowData?.currentStatus || "Not Enrolled"}
+      //     </Label>
+      //   ),
+      // },
       {
         title: "Actions",
         field: "actions",
         render: (rowData) => {
-          const isOnHts = rowData?.isOnHts;
-
           return (
             <div>
               <Link
@@ -303,7 +301,7 @@ const PatientSearch = (props) => {
                       backgroundColor: "rgb(153, 46, 98)",
                     }}
                   >
-                    {isOnHts ? <MdDashboard /> : <TiArrowForward />}
+                    <MdDashboard />
                   </Button>
                   <Button
                     style={{
@@ -317,7 +315,7 @@ const PatientSearch = (props) => {
                         fontWeight: "bolder",
                       }}
                     >
-                      {isOnHts ? "Patient Dashboard" : "Enroll Patient"}
+                      View
                     </span>
                   </Button>
                 </ButtonGroup>

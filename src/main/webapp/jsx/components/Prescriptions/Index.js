@@ -90,7 +90,7 @@ function PatientCard(props) {
               </div>
             </Tab>
 
-            <Tab eventKey="medical-history" title="Medical History">
+            <Tab eventKey="medical-history" title="Medication History">
               <MedicationHistory patientObj={patientObj}/>
             </Tab>
           </Tabs>
