@@ -295,7 +295,7 @@ const PatientSearch = (props) => {
                   <Button
                     color="primary"
                     size="small"
-                    aria-label="select merge strategy"
+                    aria-label="view drug order"
                     aria-haspopup="menu"
                     style={{
                       backgroundColor: "rgb(153, 46, 98)",
@@ -315,7 +315,7 @@ const PatientSearch = (props) => {
                         fontWeight: "bolder",
                       }}
                     >
-                      View
+                      View drug order
                     </span>
                   </Button>
                 </ButtonGroup>

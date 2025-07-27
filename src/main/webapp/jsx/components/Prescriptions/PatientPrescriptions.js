@@ -130,14 +130,12 @@ const Prescriptions = (props) => {
   }
 
   const toggle1 = (form) => {
-    //console.log(form)
     setDrugDetails({ ...drugDetails, ...form });
     setModal1(!modal1)
   }
-  
+
 
   const toggle2 = (form) => {
-    console.log(form)
     setDrugDetails({ ...drugDetails, ...form });
     setModal2(!modal2)
   }
@@ -154,8 +152,6 @@ const Prescriptions = (props) => {
   );
 
 
-
-
   const columns = useMemo(
     () => [
       {
@@ -170,39 +166,50 @@ const Prescriptions = (props) => {
         title: "Dosage Amount",
         field: "dosageAmount",
       },
-      { title: "Drug Brand Name", field: "drugBrandName" },
+      // { title: "Drug brand name", field: "drugBrandName" },
+
       { title: "Medication Brand Name", field: "medicationName" },
 
       {
-        title: "Duration", field: "duration",
+        title: "Duration",
+        render: (data) => {
+          return (
+            <span>{`${data?.duration} ${data?.durationUnit}`}</span>
+          )
+        }
       },
 
       {
-        title: "Duration Unit",
-        field: "durationUnit",
+        title: "Quantity Prescribed",
+        field: "quantityPrescribed",
+        filtering: false,
       },
+
       {
-        title: "Encounter Date",
-        field: "encounterDate",
+        title: "Quantity Dispensed",
+        field: "quantityDispensed",
+        filtering: false,
+      },
+
+      {
+        title: "Prescription Date",
+        field: "prescriptionDate",
         render: (data) => {
           return (
-            <span>{data?.encounterDate ? Moment(data.encounterDate).format('dddd, MMMM Do YYYY, h:mm A'): ""}</span>
-            )
+            <span>{data?.prescriptionDate ? Moment(data.prescriptionDate).format('dddd, MMMM Do YYYY, h:mm A') : ""}</span>
+          )
         }
       },
-      // {
-      //   title: "End Date",
-      //   field: "endDate",
-      //   render: (data) => {
-      //     return (
-      //       <span>{data?.endDate ? Moment(data?.endDate|| "").format('dddd, MMMM Do YYYY, h:mm A'): ""}</span>
-      //       )
-      //   }
-      // },
       {
-        title: "Formulation",
-        field: "formulation",
+        title: "Date dispensed",
+        field: "dateTimeDispensed",
+        render: (data) => {
+          return (
+            <span>{data?.dateTimeDispensed ? Moment(data.dateTimeDispensed).format('dddd, MMMM Do YYYY, h:mm A') : ""}</span>
+          )
+        }
       },
+
       {
         title: "Frequency",
         field: "frequency",
@@ -211,7 +218,7 @@ const Prescriptions = (props) => {
         title: "Medication Name",
         field: "medicationName",
       },
-     
+
       {
         title: "Actions",
         field: "actions",
@@ -261,7 +268,7 @@ const Prescriptions = (props) => {
             <Menu>
               <MenuButton
                 style={{
-                  backgroundColor: "#3F51B5",
+                  backgroundColor: "rgb(153, 46, 98)",
                   color: "#fff",
                   border: "2px solid #3F51B5",
                   borderRadius: "4px",

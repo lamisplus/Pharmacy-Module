@@ -148,11 +148,11 @@ const MedicationHistory = (props) => {
                         field: "frequency",
                         filtering: false,
                     },
-                    {
-                        title: "Formulation",
-                        field: "formulation",
-                        filtering: false,
-                    },
+                    // {
+                    //     title: "Formulation",
+                    //     field: "formulation",
+                    //     filtering: false,
+                    // },
                     {
                         title: "Strength",
                         field: "strength",

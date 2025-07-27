@@ -190,7 +190,6 @@ const DispenseModal = (props) => {
                                     <div className="form-group mb-3 col-md-6">
                                         <FormGroup>
                                             <Label for="dateTimeDispensed" className={classes.label}>Date Dispensed</Label>
-
                                             <Input
                                                 type="datetime-local"
                                                 name="dateTimeDispensed"
@@ -202,21 +201,7 @@ const DispenseModal = (props) => {
                                             />
                                         </FormGroup>
                                     </div>
-                                    {/* <div className="form-group mb-3 col-md-6">
-                                        <FormGroup>
-                                            <Label for="medicationName" className={classes.label}>Medication name</Label>
-                                            <Input
-                                                type="text"
-                                                name="medicationName"
-                                                value={formValues?.medicationName}
-                                                id="medicationName"
-                                                //placeholder="brand name"
-                                                onChange={handleInputChange}
-                                                className={classes.input}
-                                            />
-
-                                        </FormGroup>
-                                    </div> */}
+                                    
 
                                     <div className="form-group mb-3 col-md-6">
                                         <FormGroup>
