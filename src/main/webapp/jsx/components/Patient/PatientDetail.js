@@ -1,4 +1,4 @@
-import React,{useState} from 'react';
+import React, { useState } from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { Link } from 'react-router-dom'
 import ButtonMui from "@material-ui/core/Button";
@@ -7,7 +7,8 @@ import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import PatientCardDetail from './PatientCard';
 import { useHistory } from "react-router-dom";
-
+import { useGetPatientDrugOrder } from '../../hooks/useGetPatientDrugOrder';
+import { url, token } from '../../../api';
 
 
 const styles = theme => ({
@@ -47,20 +48,28 @@ const styles = theme => ({
 
 
 function PatientCard(props) {
-    let history = useHistory();
-    const [key, setKey] = useState('home');
-    const { classes } = props;
-    const patientObj = history.location && history.location.state ? history.location.state : {}
+  let history = useHistory();
+  const [key, setKey] = useState('home');
+  const [patientDrugOrder, setPatientDrugOrder] = useState(null)
+  const { classes } = props;
+  const patientObj = history.location && history.location.state ? history.location.state : {}
+
+  // const { fetchPatientDrugOrder } = useGetPatientDrugOrder(patientObj?.id)
+
+
+ 
+
+
+  
 
   return (
     <div className={classes.root}>
       <Card >
         <CardContent>
-           <br/>
-            <PatientCardDetail patientObj={patientObj}/>
-            <br/>
-           
-         </CardContent>
+          <br />
+          <PatientCardDetail patientObj={patientObj} />
+          <br />
+        </CardContent>
       </Card>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, Fragment} from "react";
+import React, { useState, Fragment, useMemo } from "react";
 import { TiArrowBack } from "react-icons/ti";
 import MatButton from '@material-ui/core/Button';
 import { Table } from 'reactstrap'
@@ -20,10 +20,26 @@ import {
   Col,
   Row,
 } from "reactstrap";
+import { forwardRef } from 'react';
+import { Label } from "semantic-ui-react";
+import { calculate_age } from "../../utils";
+import AddBox from '@material-ui/icons/AddBox';
+import ArrowUpward from '@material-ui/icons/ArrowUpward';
+import Check from '@material-ui/icons/Check';
+import ChevronLeft from '@material-ui/icons/ChevronLeft';
+import ChevronRight from '@material-ui/icons/ChevronRight';
+import Clear from '@material-ui/icons/Clear';
+import DeleteOutline from '@material-ui/icons/DeleteOutline';
+import Edit from '@material-ui/icons/Edit';
+import FilterList from '@material-ui/icons/FilterList';
+import FirstPage from '@material-ui/icons/FirstPage';
+import LastPage from '@material-ui/icons/LastPage';
+import Remove from '@material-ui/icons/Remove';
+import SaveAlt from '@material-ui/icons/SaveAlt';
+import Search from '@material-ui/icons/Search';
+import ViewColumn from '@material-ui/icons/ViewColumn';
+import CustomTable from "../Resuables/CustomTable";
 
-import ButtonMui from "@material-ui/core/Button";
-import Breadcrumbs from "@material-ui/core/Breadcrumbs";
-import Typography from "@material-ui/core/Typography";
 
 Moment.locale("en");
 //momentLocalizer();
@@ -65,10 +81,31 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const tableIcons = {
+  Add: forwardRef((props, ref) => <AddBox {...props} ref={ref} />),
+  Check: forwardRef((props, ref) => <Check {...props} ref={ref} />),
+  Clear: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
+  Delete: forwardRef((props, ref) => <DeleteOutline {...props} ref={ref} />),
+  DetailPanel: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
+  Edit: forwardRef((props, ref) => <Edit {...props} ref={ref} />),
+  Export: forwardRef((props, ref) => <SaveAlt {...props} ref={ref} />),
+  Filter: forwardRef((props, ref) => <FilterList {...props} ref={ref} />),
+  FirstPage: forwardRef((props, ref) => <FirstPage {...props} ref={ref} />),
+  LastPage: forwardRef((props, ref) => <LastPage {...props} ref={ref} />),
+  NextPage: forwardRef((props, ref) => <ChevronRight {...props} ref={ref} />),
+  PreviousPage: forwardRef((props, ref) => <ChevronLeft {...props} ref={ref} />),
+  ResetSearch: forwardRef((props, ref) => <Clear {...props} ref={ref} />),
+  Search: forwardRef((props, ref) => <Search {...props} ref={ref} />),
+  SortArrow: forwardRef((props, ref) => <ArrowUpward {...props} ref={ref} />),
+  ThirdStateCheck: forwardRef((props, ref) => <Remove {...props} ref={ref} />),
+  ViewColumn: forwardRef((props, ref) => <ViewColumn {...props} ref={ref} />)
+};
+
 const Prescriptions = (props) => {
 
- const prescriptionOrder  = props  && props.patientObj  ? props.patientObj : {}
-   
+  // const prescriptionOrder = props && props.patientObj ? props.patientObj : {}
+  const prescriptionOrder = props && props?.patientDrugOrder
+
   const classes = useStyles();
   const [loading, setLoading] = useState('')
   const [modal, setModal] = useState(false);
@@ -77,34 +114,28 @@ const Prescriptions = (props) => {
   const toggleModal1 = () => setModal1(!modal1)
   const [modal2, setModal2] = useState(false);
   const toggleModal2 = () => setModal2(!modal2)
-  const [formData, setFormData] = useState(props  && props.patientObj  ? props.patientObj : {});
+  const [formData, setFormData] = useState(props && props.patientDrugOrder ? props.patientDrugOrder : []);
   const [drugDetails, setDrugDetails] = useState({})
+  const [showPPI, setShowPPI] = useState(true);
 
-const updateFormData = (data) =>{
 
+  const updateFormData = (data) => {
     setLoading(true);
-    //   console.log(formData)
-    //   // const index = formData.findIndex(x => x.drugOrders.id == drugOrders.id);
-
-    //   // formData[index] = data;
-    //   // setFormData(formData);
-    // setLoading(false);
-    }
+  }
 
   const toggle = (form) => {
-    //console.log(form)
     setDrugDetails({ ...drugDetails, ...form });
     setModal(!modal);
-    
-  } 
+
+  }
+
   const toggle1 = (form) => {
-    //console.log(form)
     setDrugDetails({ ...drugDetails, ...form });
     setModal1(!modal1)
   }
 
+
   const toggle2 = (form) => {
-    console.log(form)
     setDrugDetails({ ...drugDetails, ...form });
     setModal2(!modal2)
   }
@@ -114,149 +145,218 @@ const updateFormData = (data) =>{
     </button>
   );
 
-   const closeBtn1 = (
-     <button className="close" onClick={toggle1}>
-       &times;
-     </button>
-   );
+  const closeBtn1 = (
+    <button className="close" onClick={toggle1}>
+      &times;
+    </button>
+  );
 
 
- const Actions = (form) => {
- console.log("form", form)
-   return (
-     <Menu>
-       <MenuButton
-         style={{
-           backgroundColor: "#3F51B5",
-           color: "#fff",
-           border: "2px solid #3F51B5",
-           borderRadius: "4px",
-         }}
-       >
-         Action<span aria-hidden>▾</span>
-       </MenuButton>
-       <MenuList style={{ hover: "#eee" }}>
-         {form && form.status === 0 || form.status === null ? (
-           <MenuItem onSelect={() => 
-            toggle(form)
-            }>
-             <i
-               className="fa fa-pencil"
-               aria-hidden="true"
-               size="15"
-               style={{ cursor: "pointer", color: "#000" }}
-             >
-               &nbsp; {""} Dispense drugs {}
-             </i>
-           </MenuItem>
-         ) : (
-           <MenuItem onSelect={() => toggle(form)} >
-             <i
-               className="fa fa-pencil"
-               aria-hidden="true"
-               size="15"
-               style={{ cursor: "pointer", color: "#000" }}
-             >
-               &nbsp; {""} Update details
-             </i>
-           </MenuItem>
-         )}
-         {form && form.status !=0  ? (
-            <MenuItem onSelect={() => toggle1(form)}>
-              <i
-                className="fa fa-eye"
-                aria-hidden="true"
-                size="15"
-                style={{ cursor: "pointer", color: "#000" }}
+  const columns = useMemo(
+    () => [
+      {
+        title: "Dispensing Status",
+        field: "dispensingStatus",
+      },
+      {
+        title: "Order Status",
+        field: "orderStatus",
+      },
+      {
+        title: "Dosage Amount",
+        field: "dosageAmount",
+      },
+      // { title: "Drug brand name", field: "drugBrandName" },
+
+      { title: "Medication Brand Name", field: "medicationName" },
+
+      {
+        title: "Duration",
+        render: (data) => {
+          return (
+            <span>{`${data?.duration} ${data?.durationUnit}`}</span>
+          )
+        }
+      },
+
+      {
+        title: "Quantity Prescribed",
+        field: "quantityPrescribed",
+        filtering: false,
+      },
+
+      {
+        title: "Quantity Dispensed",
+        field: "quantityDispensed",
+        filtering: false,
+      },
+
+      {
+        title: "Prescription Date",
+        field: "prescriptionDate",
+        render: (data) => {
+          return (
+            <span>{data?.prescriptionDate ? Moment(data.prescriptionDate).format('dddd, MMMM Do YYYY, h:mm A') : ""}</span>
+          )
+        }
+      },
+      {
+        title: "Date dispensed",
+        field: "dateTimeDispensed",
+        render: (data) => {
+          return (
+            <span>{data?.dateTimeDispensed ? Moment(data.dateTimeDispensed).format('dddd, MMMM Do YYYY, h:mm A') : ""}</span>
+          )
+        }
+      },
+
+      {
+        title: "Frequency",
+        field: "frequency",
+      },
+      {
+        title: "Medication Name",
+        field: "medicationName",
+      },
+
+      {
+        title: "Actions",
+        field: "actions",
+        render: (form) => {
+          // return (
+          //   <div>
+          //     <ButtonGroup
+          //       variant="contained"
+          //       aria-label="split button"
+          //       style={{
+          //         backgroundColor: "rgb(153, 46, 98)",
+          //         height: "30px",
+          //         width: "215px",
+          //       }}
+          //       size="large"
+          //     >
+          //       <Button
+          //         color="primary"
+          //         size="small"
+          //         aria-label="select merge strategy"
+          //         aria-haspopup="menu"
+          //         style={{
+          //           backgroundColor: "rgb(153, 46, 98)",
+          //         }}
+          //       >
+          //         <MdDashboard />
+          //       </Button>
+          //       <Button
+          //         style={{
+          //           backgroundColor: "rgb(153, 46, 98)",
+          //         }}
+          //       >
+          //         <span
+          //           style={{
+          //             fontSize: "12px",
+          //             color: "#fff",
+          //             fontWeight: "bolder",
+          //           }}
+          //         >
+          //           Action
+          //         </span>
+          //       </Button>
+          //     </ButtonGroup>
+          //   </div>
+          // );
+          return (
+            <Menu>
+              <MenuButton
+                style={{
+                  backgroundColor: "rgb(153, 46, 98)",
+                  color: "#fff",
+                  border: "2px solid #3F51B5",
+                  borderRadius: "4px",
+                  padding: 10
+                }}
               >
-                &nbsp; {""}View details
-              </i>
-            </MenuItem>
-         )
-         :
-         ""
-      }
-       </MenuList>
-     </Menu>
-   );
- };
+                Action<span aria-hidden>▾</span>
+              </MenuButton>
+
+              <MenuList style={{ hover: "#eee" }}>
+                {form && form.dispensingStatus?.toLowerCase() === "pending" || form.status === null ? (
+                  <MenuItem onSelect={() =>
+                    toggle(form)
+                  }>
+                    <i
+                      className="fa fa-pencil"
+                      aria-hidden="true"
+                      size="15"
+                      style={{ cursor: "pointer", color: "#000", fontSize: 15 }}
+                    >
+                      &nbsp; {""} Dispense drugs { }
+                    </i>
+                  </MenuItem>
+                ) : (
+                  <MenuItem onSelect={() => toggle(form)} >
+                    <i
+                      className="fa fa-pencil"
+                      aria-hidden="true"
+                      size="15"
+                      style={{ cursor: "pointer", color: "#000" }}
+                    >
+                      &nbsp; {""} Update details
+                    </i>
+                  </MenuItem>
+                )}
+                {form && form.dispensingStatus?.toLowerCase() !== "pending" ? (
+                  <MenuItem onSelect={() => toggle1(form)}>
+                    <i
+                      className="fa fa-eye"
+                      aria-hidden="true"
+                      size="15"
+                      style={{ cursor: "pointer", color: "#000" }}
+                    >
+                      &nbsp; {""}View details
+                    </i>
+                  </MenuItem>
+                )
+                  :
+                  ""
+                }
+              </MenuList>
+            </Menu>
+          );
+
+        },
+      },
+    ],
+    [showPPI]
+  );
+
+
   return (
     <React.Fragment>
-        <Card body>
-        {/*
-        <Link to={"/"} >
-            <ButtonMui
-                variant="contained"
-                color="primary"
-                className=" float-end ms-2"
-                startIcon={<FaUserPlus size="10"/>}
-            >
-                <span style={{ textTransform: "capitalize" }}>Back</span>
-            </ButtonMui>
-            </Link> */}
-          <div>
-            {formData.drugOrders.length >= 0 ? (
-              <Fragment>
-                   <h3>Drug Order Details</h3>
-                    <br />
-                    
-                            <Table striped responsive >
-                              <thead style={{backgroundColor: "#014d88", color: "#fff"}}>
-                                <tr>
-                                  <th>Name</th>
-                                  <th>Dosage</th>
-                                  <th>Duration</th>
-                                  <th>Date Prescribed</th>
-                                  <th>Date Dispensed</th>
-                                  <th></th>
-                                </tr>
-                              </thead>
-                              
-                              
-                                <tbody >
-                                {!loading  ?  formData.drugOrders.map((form) => (
-                                  
-                                  form !==null?
-                                  <tr key={form.id}>
-                                    <td>{form.drugName}</td>
-                                    <td>{form.dosageFrequency && form.dosageStrengthUnit ? form.dosageFrequency + ' ' + form.dosageStrengthUnit : '' }</td>
-                                    <td>{form.duration && form.duration ? form.duration + ' ' + form.durationUnit : ''}</td>
-                                    <td>{Moment(form.dateTimePrescribed).format("YYYY-MM-DD  HH:mm:ss")}</td>
-                                    <td>{ form.dateTimeDispensed !== null ? form.dateTimeDispensed.replace("@", " ") : Moment(new Date()).format("YYYY-MM-DD  HH:mm:ss") }</td>
-                                    <td>{Actions(form)}</td>
-                                  </tr>
-                                  :
-                                   <tr></tr>
-                                  ))
-                                  :<p> <Spinner color="primary" /> Loading Please Wait</p>
-                                } 
-                                </tbody>
-                               
-                            </Table>
-                            <br />
-                       
-              </Fragment>
-            ) : (
-              <div style={{height:'300px'}}>
-                <p>
-                  {" "}
-                  {/* <Spinner color="primary" /> Loading Please Wait.. */}
-                  No Prescription details. Please try again...
-                </p>
-              </div>
-            )}
-          </div>
-        
-     
-      {modal || modal1 ? 
-      (
-        <>
-        <DispenseModal  modalstatus={modal} togglestatus={toggleModal} datasample={drugDetails} updateFormData={updateFormData}/>
-        <ViewModal modalstatus={modal1} togglestatus={toggleModal1} datasample={drugDetails}/>
-       </>
-      ) 
-      : ""
-      } 
+      <Card body>
+
+        <div>
+          <CustomTable
+            key={prescriptionOrder?.length}
+            title="Patient Medication Order Details"
+            columns={columns}
+            data={prescriptionOrder}
+            icons={tableIcons}
+            // showPPI={false}
+            renderCheckBox={false}
+          // onPPIChange={handleCheckBox}
+          />
+        </div>
+
+
+        {modal || modal1 ?
+          (
+            <>
+              <DispenseModal modalstatus={modal} togglestatus={toggleModal} datasample={drugDetails} updateFormData={updateFormData} />
+              <ViewModal modalstatus={modal1} togglestatus={toggleModal1} datasample={drugDetails} />
+            </>
+          )
+          : ""
+        }
       </Card>
     </React.Fragment>
   );

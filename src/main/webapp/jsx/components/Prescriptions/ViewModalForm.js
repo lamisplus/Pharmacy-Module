@@ -1,8 +1,9 @@
-import React, {useState, useEffect} from 'react';
-import {  Modal, ModalHeader, ModalBody,
-    Col,Input,
+import React, { useState, useEffect } from 'react';
+import {
+    Modal, ModalHeader, ModalBody,
+    Col, Input,
     FormGroup,
-    Label,Card, CardBody
+    Label, Card, CardBody
 } from 'reactstrap';
 
 import MatButton from '@material-ui/core/Button'
@@ -14,8 +15,8 @@ import "react-toastify/dist/ReactToastify.css";
 import "react-widgets/styles.css";
 import axios from "axios";
 import { Row } from "react-bootstrap";
-import { Segment,  } from 'semantic-ui-react'
-import { url  as baseUrl, token} from "../../../api";
+import { Segment, } from 'semantic-ui-react'
+import { url as baseUrl, token } from "../../../api";
 import Moment from 'moment';
 import momentLocalizer from 'react-widgets-moment';
 import { useHistory } from 'react-router-dom';
@@ -59,10 +60,10 @@ const useStyles = makeStyles(theme => ({
 }))
 
 const ViewDispenseModal = (props) => {
-   const history = useHistory();
-   const drugDetails= props && props.datasample ? props.datasample : {}
-   //console.log(drugDetails)
-   //console.log(props)
+    const history = useHistory();
+    const drugDetails = props && props.datasample ? props.datasample : {}
+    //console.log(drugDetails)
+    //console.log(props)
 
     const { buttonLabel, className } = props;
     const toggle = props.togglestatus
@@ -70,11 +71,11 @@ const ViewDispenseModal = (props) => {
     const closeBtn = props.close
     const classes = useStyles();
     const [saving, setSaving] = useState(false);
-    const [drugDispenseObj] = useState({drugDispenses:[]})
+    const [drugDispenseObj] = useState({ drugDispenses: [] })
     const [formValues, setFormValues] = useState(drugDetails);
 
     const handleInputChange = (e) => {
-        setFormValues ({ ...formValues, [e.target.name]: e.target.value });
+        setFormValues({ ...formValues, [e.target.name]: e.target.value });
     }
     return (
         <div>
@@ -94,33 +95,33 @@ const ViewDispenseModal = (props) => {
                             <Col lg={12}>
                                 <Row>
                                     <Col xl={12} >
-                                    <Segment color='teal'>
-                                        <Row>
-                                            <Col className="col-md-6 mb-2">
-                                                <strong>Drug Name :</strong> <p>{drugDetails.drugName}</p>
-                                            </Col>
-                                            <Col className="col-md-6 mb-2">
+                                        <Segment color='teal'>
+                                            <Row>
+                                                <Col className="col-md-6 mb-2">
+                                                    <strong>Drug Name :</strong> <p>{drugDetails.drugName}</p>
+                                                </Col>
+                                                {/* <Col className="col-md-6 mb-2">
                                                 <strong>Date Prescribed : </strong> <p>{drugDetails.dateTimePrescribed.replace("@", " ")}</p>
-                                            </Col>
-                                            <Col className="col-md-6 mb-2">
-                                                <strong>Dose Frequency :</strong><p>{drugDetails.dosageFrequency} daily</p>
-                                            </Col>
-                                            <Col className="col-md-6 mb-2">
-                                                <strong>Start Date :</strong><p>{drugDetails.startDate}</p>
-                                            </Col>
-                                            <Col className="col-md-6 mb-1">
-                                                <strong>Instruction : </strong><p>{drugDetails.comment}</p>
-                                            </Col>
-                                        </Row>
-                                    </Segment>
+                                            </Col> */}
+                                                <Col className="col-md-6 mb-2">
+                                                    <strong>Dose Frequency :</strong><p>{drugDetails.dosageFrequency} daily</p>
+                                                </Col>
+                                                <Col className="col-md-6 mb-2">
+                                                    <strong>Start Date :</strong><p>{drugDetails.startDate}</p>
+                                                </Col>
+                                                <Col className="col-md-6 mb-1">
+                                                    <strong>Instruction : </strong><p>{drugDetails.comment}</p>
+                                                </Col>
+                                            </Row>
+                                        </Segment>
                                     </Col>
 
                                 </Row>
 
                             </Col>
-                            <br/>
+                            <br />
                             <form>
-                            <div className="row">
+                                <div className="row">
                                     <div className="form-group mb-3 col-md-6">
                                         <FormGroup>
                                             <Label for="dateTimeDispensed">Date Dispensed</Label>
@@ -128,7 +129,7 @@ const ViewDispenseModal = (props) => {
                                             <Input
                                                 type="text"
                                                 name="dateTimeDispensed"
-                                                value={formValues.dateTimeDispensed === null ? "" :formValues.dateTimeDispensed.replace("@", " ")}
+                                                value={formValues.dateTimeDispensed}
                                                 id="dateTimeDispensed"
                                                 placeholder="Date Dispensed"
                                                 onChange={handleInputChange}
@@ -136,8 +137,8 @@ const ViewDispenseModal = (props) => {
                                             />
                                         </FormGroup>
                                     </div>
-                                    </div>
-                                    <div className="row">
+                                </div>
+                                <div className="row">
                                     <div className="form-group mb-3 col-md-5">
                                         <FormGroup>
                                             <Label for="exampleNumber">Brand name</Label>

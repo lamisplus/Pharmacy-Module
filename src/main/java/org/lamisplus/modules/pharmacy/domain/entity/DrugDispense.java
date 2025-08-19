@@ -8,20 +8,23 @@ import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import com.vladmihalcea.hibernate.type.json.JsonNodeBinaryType;
 import com.vladmihalcea.hibernate.type.json.JsonNodeStringType;
 import com.vladmihalcea.hibernate.type.json.JsonStringType;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
+import lombok.*;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
-import org.hibernate.annotations.TypeDefs;
+import org.hibernate.annotations.*;
 import org.lamisplus.modules.base.domain.entities.Audit;
+import org.lamisplus.modules.base.security.SecurityUtils;
+import org.lamisplus.modules.patient.domain.entity.Person;
 
 import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.sql.Date;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
+
 
 @TypeDefs({
         @TypeDef(name = "string-array", typeClass = StringArrayType.class),
@@ -33,65 +36,111 @@ import java.util.UUID;
 })
 @Entity
 @Table(name = "drug_dispense")
-@EqualsAndHashCode(callSuper = false)
-@Data
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Where(clause = "archived = 0")
 public class DrugDispense extends Audit {
     @Id
-    @Column(name = "id", updatable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String drugName;
 
-    @Column(name = "uuid", updatable = false)
-    @JsonIgnore
+    @Column(name = "uuid", unique = true, nullable = false, updatable = false)
     private String uuid;
 
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd@HH:mm:ss")
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "drug_order_id", nullable = false)
+    private DrugOrder drugOrder;
+
+
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient_id", nullable = false)
+    private Person patient;
+
+    @Column(name = "medication_name", nullable = false)
+    private String medicationName;
+
+    @Column(name = "brand_name")
+    private String brandName;
+
+    @Column(name = "manufacturer")
+    private String manufacturer;
+
+    @Column(name = "batch_number")
+    private String batchNumber;
+
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
+
+    @Column(name = "quantity_dispensed", nullable = false)
+    private Integer quantityDispensed;
+
+    @Column(name = "quantity_unit")
+    private String quantityUnit;
+
+    @Column(name = "formulation")
+    private String formulation;
+
+    @Column(name = "strength")
+    private String strength;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    @Column(name = "date_time_dispensed", nullable = false)
     private LocalDateTime dateTimeDispensed;
-    private String comment;
-    private String brand;
-    private Long quantity;
-    private String unit;
-    private String dispensedBy;
-    private Date startDate;
-    private String dosageStrength;
-    private String dosageStrengthUnit;
-    private Integer dosageFrequency;
 
-    @Basic
-    @Column(name = "drug_order_id")
-    @NotNull(message = "drugOrderId is mandatory")
-    private Long drugOrderId;
+    @Column(name = "dispensed_by")
+    private Long dispensedBy;
 
-    @JsonIgnore
-    private Integer archived;
+    @Column(name = "dispenser_name")
+    private String dispenserName;
 
-    @NotNull(message = "patientId is mandatory")
-    private Long patientId;
-    private Integer duration;
-    private String durationUnit;
-    private String type;
+    @Column(name = "substitution_made")
+    private Boolean substitutionMade = false;
 
-    @JsonIgnore
+    @Column(name = "substitution_reason")
+    private String substitutionReason;
+
+
+    @Column(name = "dispensing_notes", columnDefinition = "TEXT")
+    private String dispensingNotes;
+
+    @Column(name = "encounter_date")
+    private LocalDateTime encounterDate;
+
+
+    @Column(name = "is_refill")
+    private Boolean isRefill = false;
+
+    @Column(name = "refill_number")
+    private Integer refillNumber;
+
+    @Column(name = "archived")
+    private Integer archived = 0;
+
+    @Column(name = "organisation_unit_id")
     private Long organisationUnitId;
 
-    @OneToOne
-    @JsonIgnore
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    @JoinColumn(name = "drug_order_id", referencedColumnName = "id", updatable = false, insertable = false)
-    private DrugOrder drugOrderByDrugOrderId;
 
-    @Type(type = "jsonb")
-    @Basic(fetch = FetchType.LAZY)
-    @Column(name = "other_details", columnDefinition = "jsonb")
-    private Object otherDetails;
 
     @PrePersist
-    private void setFields(){
-        if(StringUtils.isBlank(uuid)){
-            uuid = UUID.randomUUID().toString();
+    public void prePersist() {
+        if (this.uuid == null) {
+            this.uuid = UUID.randomUUID().toString();
         }
-        archived = 0;
+        if (this.dateTimeDispensed == null) {
+            this.dateTimeDispensed = LocalDateTime.now();
+        }
+        if (this.archived == null) {
+            this.archived = 0;
+        }
+        if (this.dispensedBy == null || this.dispenserName == null) {
+            SecurityUtils.getCurrentUserLogin().ifPresent(email -> {
+                this.dispenserName = email;
+            });
+        }
     }
 }
