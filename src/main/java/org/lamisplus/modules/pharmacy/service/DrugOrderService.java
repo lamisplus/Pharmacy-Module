@@ -72,6 +72,11 @@ public class DrugOrderService {
 
     @Transactional
     public DrugOrder saveOrder(DrugOrderDTO dto) {
+        if (dto.getEncounterDate() != null && dto.getStartDate() != null) {
+            if (dto.getStartDate().isBefore(dto.getEncounterDate())) {
+                throw new IllegalArgumentException("Start date cannot be earlier than encounter date");
+            }
+        }
         DrugOrder drugOrder = drugOrderMapper.toEntity(dto);
 
         Person patient = personRepository.findById(dto.getPatientId())
