@@ -7,7 +7,7 @@ import org.springframework.core.annotation.Order;
 @Order(1)
 @Installer(name = "pharmacy-schema-installer",
         description = "Installs the required pharmacy database tables",
-        version = 2)
+        version = 4)
 public class PharmacySchemaInstaller extends AcrossLiquibaseInstaller {
     public PharmacySchemaInstaller() {
         super("classpath:schema/pharmacy-schema.xml");

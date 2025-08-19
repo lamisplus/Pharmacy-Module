@@ -13,6 +13,7 @@ import org.lamisplus.modules.pharmacy.domain.dto.*;
 import org.lamisplus.modules.pharmacy.domain.entity.DispensingStatus;
 import org.lamisplus.modules.pharmacy.domain.entity.DrugDispense;
 import org.lamisplus.modules.pharmacy.domain.entity.DrugOrder;
+import org.lamisplus.modules.pharmacy.domain.entity.OrderStatus;
 import org.lamisplus.modules.pharmacy.domain.mapper.DrugDispenseMapper;
 import org.lamisplus.modules.pharmacy.domain.projections.DispensingHistoryProjection;
 import org.lamisplus.modules.pharmacy.domain.projections.DrugDispenseProjection;
@@ -68,7 +69,6 @@ public class DrugDispenseService {
 
         log.info("Drug order found: {}", drugOrder.getMedicationName());
 
-
         Person patient = drugOrder.getPatient();
         log.info("Using patient from drug order: {} {} (ID: {})",
                 patient.getFirstName(), patient.getSurname(), patient.getId());
@@ -76,12 +76,20 @@ public class DrugDispenseService {
         if (!patient.getId().equals(dto.getPatientId())) {
             log.warn("Patient ID mismatch - Order has: {}, DTO has: {}",
                     patient.getId(), dto.getPatientId());
-
         }
 
-        DrugDispense dispensing = drugDispenseMapper.toEntity(dto);
 
-        dispensing.setDrugOrder(drugOrder);
+        log.info("Before update - Status: {}, Dispensing: {}", drugOrder.getOrderStatus(), drugOrder.getDispensingStatus());
+        drugOrder.setOrderStatus(OrderStatus.COMPLETED);
+        drugOrder.setDispensingStatus(DispensingStatus.DISPENSED);
+        log.info("After setting - Status: {}, Dispensing: {}", drugOrder.getOrderStatus(), drugOrder.getDispensingStatus());
+        DrugOrder savedDrugOrder = drugOrderRepository.saveAndFlush(drugOrder);
+
+        log.info("After save - Status: {}, Dispensing: {}", savedDrugOrder.getOrderStatus(), savedDrugOrder.getDispensingStatus());
+
+
+        DrugDispense dispensing = drugDispenseMapper.toEntity(dto);
+        dispensing.setDrugOrder(savedDrugOrder);
         dispensing.setPatient(patient);
         dispensing.setMedicationName(drugOrder.getMedicationName());
         dispensing.setFormulation(drugOrder.getFormulation());
@@ -89,6 +97,7 @@ public class DrugDispenseService {
         dispensing.setDateTimeDispensed(LocalDateTime.now());
 
         DrugDispense saved = drugDispensingRepository.save(dispensing);
+
         return drugDispenseMapper.toDTO(saved);
     }
 
@@ -207,7 +216,7 @@ public Page<DrugDispenseDTO> getPatientDispensingHistory(Long patientId, Pageabl
         }
 
         if (totalDispensed.equals(quantityPrescribed)) {
-            newStatus = DispensingStatus.FULLY_DISPENSED;
+            newStatus = DispensingStatus.DISPENSED;
         } else if (totalDispensed > 0) {
             newStatus = DispensingStatus.PARTIALLY_DISPENSED;
         } else {

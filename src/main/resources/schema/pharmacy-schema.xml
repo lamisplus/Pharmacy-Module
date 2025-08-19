@@ -140,7 +140,7 @@
     </changeSet>
 
 
-    <changeSet failOnError="false" author="Graceman" id="1652433182071-pharmacy-29">
+    <changeSet failOnError="false" author="Graceman" id="1652433182035-pharmacy-35">
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="drug_dispense"/>
@@ -150,34 +150,62 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints primaryKey="true" primaryKeyName="drug_dispense_pkey"/>
             </column>
-            <column name="uuid" type="VARCHAR(255)"/>
-            <column name="drug_order_id" type="BIGINT"/>
-            <column name="patient_id" type="BIGINT"/>
-            <column name="medication_name" type="VARCHAR(255)"/>
+
+            <column name="uuid" type="VARCHAR(255)">
+                <constraints nullable="false" unique="true"/>
+            </column>
+
+            <column name="drug_order_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="patient_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+
+            <column name="medication_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="brand_name" type="VARCHAR(255)"/>
             <column name="manufacturer" type="VARCHAR(255)"/>
             <column name="batch_number" type="VARCHAR(255)"/>
             <column name="expiry_date" type="DATE"/>
-            <column name="quantity_dispensed" type="INT"/>
+
+            <column name="quantity_dispensed" type="INT">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="quantity_unit" type="VARCHAR(255)"/>
             <column name="formulation" type="VARCHAR(255)"/>
             <column name="strength" type="VARCHAR(255)"/>
+
             <column name="encounter_date" type="TIMESTAMP WITHOUT TIME ZONE"/>
-            <column name="date_time_dispensed" type="TIMESTAMP WITHOUT TIME ZONE"/>
+
+            <column name="date_time_dispensed" type="TIMESTAMP WITHOUT TIME ZONE">
+                <constraints nullable="false"/>
+            </column>
+
             <column name="dispensed_by" type="BIGINT"/>
             <column name="dispenser_name" type="VARCHAR(255)"/>
-            <column name="substitution_made" type="INT"/>
+
+            <column name="substitution_made" type="BOOLEAN" defaultValueBoolean="false"/>
             <column name="substitution_reason" type="VARCHAR(255)"/>
-            <column name="dispensing_notes" type="VARCHAR(2147483647)"/>
-            <column name="is_refill" type="INT"/>
+            <column name="dispensing_notes" type="TEXT"/>
+
+            <column name="is_refill" type="BOOLEAN" defaultValueBoolean="false"/>
             <column name="refill_number" type="INT"/>
+
             <column name="organisation_unit_id" type="BIGINT"/>
+
             <column name="created_by" type="VARCHAR(255)"/>
             <column name="date_created" type="TIMESTAMP WITHOUT TIME ZONE"/>
             <column name="date_modified" type="TIMESTAMP WITHOUT TIME ZONE"/>
             <column name="modified_by" type="VARCHAR(255)"/>
-            <column name="archived" type="INT"/>
+
+            <column name="archived" type="INT" defaultValueNumeric="0"/>
         </createTable>
+
     </changeSet>
 
     <changeSet failOnError="false" author="Graceman" id="1652433182071-pharmacy-35">
